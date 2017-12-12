@@ -3,9 +3,6 @@ layout: post
 title: Counting Quotient Filter Vs Bloom filter and Countmin Sketch
 published: true
 ---
-
-![an image alt text]({{ site.baseurl }}/images/jekyll-logo.png "an image title")
-
 ## Abstract
 
 
