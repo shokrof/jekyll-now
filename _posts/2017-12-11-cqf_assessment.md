@@ -37,7 +37,7 @@ If we need to increase the number of slots for resizing, we need to increase the
 I found that the r is always set to 8(size +8 ). I tried to change it to 5, but the code fails the basic test. Therefore. I concluded we can't implement resizing technique described in cqf paper using this cqf implementation. Unless this bug is fixed.
 From [Storage.hh](https://github.com/shokrof/khmer/blob/DibMaster/include/oxli/storage.hh): 
 
-![QFStorageInit.png]({{site.baseurl}}/_posts/QFStorageInit.png)
+![QFStorageInit.png](QFStorageInit.png)
 
 ##Accuracy Test
 [Script](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/runTests.sh)
@@ -57,7 +57,7 @@ The script generates 3 files:
 3. Unseen Kmers: kmers that don't exist in the previous dataset.
 
 I generated 1M kmer of length 20 and 10K unseen kmers.Here is the frequency distribution for the 1M kmers
-![data1000000.goldHist.png]({{site.baseurl}}/_posts/data1000000.goldHist.png)
+![data1000000.goldHist.png](data1000000.goldHist.png)
 
 ###Experiment:
 I did the experiment  using different sketch sizes. Sketch size is approximate number for the actual size allocated in the memory.
@@ -65,16 +65,16 @@ I did the experiment  using different sketch sizes. Sketch size is approximate n
 
 I used simple accuracy measure. I calculate the absolute difference between the true count for the kmer and the observed count ([Accuracy Test Code](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/testPerfomance.py)). I drew boxplot for all the values ([Plotting Code](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/plotPerformanceBoxPlot.py)).
 
-![data1000000.Exist.png]({{site.baseurl}}/_posts/data1000000.Exist.png)
+![data1000000.Exist.png](data1000000.Exist.png)
 
-![data1000000.NonExist.png]({{site.baseurl}}/_posts/data1000000.NonExist.png)
+![data1000000.NonExist.png](data1000000.NonExist.png)
 
 As Expected, The cqf has less errors than count min sketch, but the cqf errors are more scattered. 
 
 ##Load Factor Test
 [RSQF Code](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/testLoadFactor.py),[CQF Code](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/testLoadFactorCQF.py)
 
-![filtersBitsPerelement.png]({{site.baseurl}}/_posts/filtersBitsPerelement.png)
+![filtersBitsPerelement.png](filtersBitsPerelement.png)
 
 
 
@@ -90,7 +90,7 @@ In this case, RSQF can be more space efficient than the bloom filter. However, T
 I am trying to test the loading of cqf with uniformly distributed kmers. I repeated the above experiment but each kmer is repeated M times. I ran the experiments  with different values of M and recorded the maximum number of kmers that can be inserted.
 Values of M are 2**i-1 for i in 1:16
 
-![loadingCQF.png]({{site.baseurl}}/_posts/loadingCQF.png)
+![loadingCQF.png](loadingCQF.png)
 
 
 I was expecting the graph to be in the shape of a ladder. The Number of unique kmers will be constant for all Ms except 3 and 255 where it will have steep changes. The steep changes indicates that the cqf decides using bigger counters. However, I observed that the number of unique kmers that can be inserted keeps decreasing with the increase of M. I don’t know the reason.
