@@ -28,7 +28,8 @@ CQF hashes a kmer and divides the hash bits into two components: quotient and re
 
 From [Storage.hh](https://github.com/shokrof/khmer/blob/DibMaster/include/oxli/storage.hh): 438
 
-![Screenshot from 2017-12-12 11-47-09.png]({{site.baseurl}}/_posts/Screenshot from 2017-12-12 11-47-09.png)
+![qfadd.png]({{site.baseurl}}/_posts/qfadd.png)
+
 
 To make the filter bigger but using the same hash function we need to increase the q value and decrease the r value to maintain the cf.range the same
 If we need to increase the number of slots for resizing, we need to increase the q without decreasing cf.range. Changing cf.range is similar to changing the hash function. So, We can increase the q and decrease r and maintain cf.range constant before and after the resizing.
@@ -93,12 +94,3 @@ Values of M are 2**i-1 for i in 1:16
 
 
 I was expecting the graph to be in the shape of a ladder. The Number of unique kmers will be constant for all Ms except 3 and 255 where it will have steep changes. The steep changes indicates that the cqf decides using bigger counters. However, I observed that the number of unique kmers that can be inserted keeps decreasing with the increase of M. I don’t know the reason.
-
-
-
-
-
-
-
-
-
