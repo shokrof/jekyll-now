@@ -28,7 +28,7 @@ CQF hashes a kmer and divides the hash bits into two components: quotient and re
 
 From [Storage.hh](https://github.com/shokrof/khmer/blob/DibMaster/include/oxli/storage.hh): 438
 
-![qfadd.png]({{site.baseurl}}/_posts/qfadd.png)
+![qfadd.png](qfadd.png)
 
 
 To make the filter bigger but using the same hash function we need to increase the q value and decrease the r value to maintain the cf.range the same
