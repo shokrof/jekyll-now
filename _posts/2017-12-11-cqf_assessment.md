@@ -39,7 +39,7 @@ From [Storage.hh](https://github.com/shokrof/khmer/blob/DibMaster/include/oxli/s
 
 ![QFStorageInit.png](QFStorageInit.png)
 
-##Accuracy Test
+## Accuracy Test
 [Script](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/runTests.sh)
 
 I am trying to compare the accuracy of khmer implementation of both cqf and count min sketch. 
@@ -49,7 +49,7 @@ I am trying to compare the accuracy of khmer implementation of both cqf and coun
 4. Calculate the accuracy of kmers don’t exist in the sketch.
 
 
-###Dataset
+### Dataset
 I created a simulated dataset for testing CQF implementation in Khmer. I developed [script](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/generateSeq.py) to generate kmers with left skewed frequency([zipifan distribution](https://en.wikipedia.org/wiki/Zipf%27s_law)). 
 The script generates 3 files: 
 1. dataset: kmers to be counted.
@@ -59,7 +59,7 @@ The script generates 3 files:
 I generated 1M kmer of length 20 and 10K unseen kmers.Here is the frequency distribution for the 1M kmers
 ![data1000000.goldHist.png](data1000000.goldHist.png)
 
-###Experiment:
+### Experiment:
 I did the experiment  using different sketch sizes. Sketch size is approximate number for the actual size allocated in the memory.
 
 
@@ -71,7 +71,7 @@ I used simple accuracy measure. I calculate the absolute difference between the 
 
 As Expected, The cqf has less errors than count min sketch, but the cqf errors are more scattered. 
 
-##Load Factor Test
+## Load Factor Test
 [RSQF Code](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/testLoadFactor.py),[CQF Code](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/testLoadFactorCQF.py)
 
 ![filtersBitsPerelement.png](filtersBitsPerelement.png)
