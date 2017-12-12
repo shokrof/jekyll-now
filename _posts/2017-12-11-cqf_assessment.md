@@ -31,10 +31,9 @@ From [Storage.hh](https://github.com/shokrof/khmer/blob/DibMaster/include/oxli/s
 ![qfadd.png]({{ site.baseurl }}/images/qfadd.png "qf")
 
 
-To make the filter bigger but using the same hash function we need to increase the q value and decrease the r value to maintain the cf.range the same
-If we need to increase the number of slots for resizing, we need to increase the q without decreasing cf.range. Changing cf.range is similar to changing the hash function. So, We can increase the q and decrease r and maintain cf.range constant before and after the resizing.
+If we need to increase the number of slots for resizing, we need to increase the q without decreasing cf.range(using the same number of hashbits). Changing cf.range is similar to changing the hash function. So, We can increase the q and decrease r and maintain cf.range constant before and after the resizing.
 
-I found that the r is always set to 8(size +8 ). I tried to change it to 5, but the code fails the basic test. Therefore. I concluded we can't implement resizing technique described in cqf paper using this cqf implementation. Unless this bug is fixed.
+I found that the r is always set to 8(size +8 ). I tried to change it to lesser values(2-7), but the code fails the basic test. Therefore. I concluded we can't implement resizing technique described in cqf paper using the current cqf implementation. Unless this bug is fixed.
 
 From [Storage.hh](https://github.com/shokrof/khmer/blob/DibMaster/include/oxli/storage.hh): Line 418
 
@@ -84,14 +83,14 @@ The first obstacle is to calculate the load factor for the cqf. After reviewing 
 
 I created QFCounttable by passing 8192 as input. 9152 slots are created. I gradually increase the load factor by inserting more unique kmers. The program succeeded to insert 9050 unique kmers(98% load factor). The number of hash collisions was 24.Code
 
-In this case, RSQF can be more space efficient than the bloom filter. However, The counting feature must be disabled first. The cqf paper claims that the counting does not take extra space which is not correct. 
 
 
 
-I am trying to test the loading of cqf with uniformly distributed kmers. I repeated the above experiment but each kmer is repeated M times. I ran the experiments  with different values of M and recorded the maximum number of kmers that can be inserted.
+
+CQF testing,I am trying to test the loading of cqf with uniformly distributed kmers. I repeated the above experiment but each kmer is repeated M times. I ran the experiments  with different values of M and recorded the maximum number of kmers that can be inserted.
 Values of M are 2**i-1 for i in 1:16
 
 ![loadingCQF.png]({{ site.baseurl }}/images/loadingCQF.png)
 
 
-I was expecting the graph to be in the shape of a ladder. The Number of unique kmers will be constant for all Ms except 3 and 255 where it will have steep changes. The steep changes indicates that the cqf decides using bigger counters. However, I observed that the number of unique kmers that can be inserted keeps decreasing with the increase of M. I don’t know the reason.
+
