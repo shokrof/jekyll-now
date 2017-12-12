@@ -26,7 +26,7 @@ I used some testcases from khmer to test the new QFCounttable. The test cases co
 
 CQF hashes a kmer and divides the hash bits into two components: quotient and reminder. Quotient part is used to determine a certain slot. Then, CQF put the reminder in this slot.  In Khmer, Mod is applied on the mumur hash bits and filter range(cf.range= 2^(q+r)).
 
-From [Storage.hh](https://github.com/shokrof/khmer/blob/DibMaster/include/oxli/storage.hh): 438
+From [Storage.hh](https://github.com/shokrof/khmer/blob/DibMaster/include/oxli/storage.hh): Line 438
 
 ![qfadd.png]({{ site.baseurl }}/images/qfadd.png "qf")
 
@@ -35,7 +35,7 @@ To make the filter bigger but using the same hash function we need to increase t
 If we need to increase the number of slots for resizing, we need to increase the q without decreasing cf.range. Changing cf.range is similar to changing the hash function. So, We can increase the q and decrease r and maintain cf.range constant before and after the resizing.
 
 I found that the r is always set to 8(size +8 ). I tried to change it to 5, but the code fails the basic test. Therefore. I concluded we can't implement resizing technique described in cqf paper using this cqf implementation. Unless this bug is fixed.
-From [Storage.hh](https://github.com/shokrof/khmer/blob/DibMaster/include/oxli/storage.hh): 
+From [Storage.hh](https://github.com/shokrof/khmer/blob/DibMaster/include/oxli/storage.hh): Line 418
 
 ![QFStorageInit.png]({{site.baseurl}}/images/QFStorageInit.png)
 
