@@ -68,9 +68,6 @@ I used simple accuracy measure. I calculate the absolute difference between the 
 
 ![data1000000.NonExist.png]({{site.baseurl}}/_posts/data1000000.NonExist.png)
 
-
-
-
 As Expected, The cqf has less errors than count min sketch, but the cqf errors are more scattered. 
 
 ##Load Factor Test
