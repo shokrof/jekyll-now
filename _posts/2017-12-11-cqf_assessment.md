@@ -37,7 +37,7 @@ If we need to increase the number of slots for resizing, we need to increase the
 I found that the r is always set to 8(size +8 ). I tried to change it to 5, but the code fails the basic test. Therefore. I concluded we can't implement resizing technique described in cqf paper using this cqf implementation. Unless this bug is fixed.
 From [Storage.hh](https://github.com/shokrof/khmer/blob/DibMaster/include/oxli/storage.hh): 
 
-![QFStorageInit.png]({{ site.baseurl }}/images/QFStorageInit.png)
+![QFStorageInit.png]({{site.baseurl}}/images/QFStorageInit.png)
 
 ## Accuracy Test
 [Script](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/runTests.sh)
