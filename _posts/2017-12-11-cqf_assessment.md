@@ -3,9 +3,10 @@ layout: post
 title: Counting Quotient Filter Vs Bloom filter and Countmin Sketch
 published: true
 ---
-Sketches provides approximate representation for a data using little amount of memory compared to the real data size. I am covering in this blog post two types: Approximate membership query(AMQ), and Counting Sketches. As the name suggests, AMQ answers if a particular element exists on a set or not. Counting sketch return how many times the element inserted in the sketch. I made assement for Quotient Sketches familes: two different families of sketches: [Quotient Filter](http://vldb.org/pvldb/vol5/p1627_michaelabender_vldb2012.pdf) and [Counting Quotient Filter](https://dl.acm.org/citation.cfm?id=3035963).I am comparing it with  [Bloom filter](https://en.wikipedia.org/wiki/Bloom_filter) for and [Count min sketch](https://en.wikipedia.org/wiki/Count%E2%80%93min_sketch).
+Sketches provides approximate representation for a data using little amount of memory compared to the real data size. I am covering in this blog post two types: Approximate membership query(AMQ), and Counting Sketches. As the name suggests, AMQ answers if a particular element exists on a set or not. Counting sketch return how many times the element inserted in the sketch. I made assement for Quotient Sketches family [Quotient Filter](http://vldb.org/pvldb/vol5/p1627_michaelabender_vldb2012.pdf) and [Counting Quotient Filter](https://dl.acm.org/citation.cfm?id=3035963).I am comparing it with  [Bloom filter](https://en.wikipedia.org/wiki/Bloom_filter) and [Count min sketch](https://en.wikipedia.org/wiki/Count%E2%80%93min_sketch).
 
-The Idea of quotient filter was first coined in the first paper. The second paper  improved Quotient filter under the name of Rank Select Quotient filter(RSQF). It also developed a counting sketch(Counting Quotient Filter) based on the same ideas. 
+The Idea of quotient filter was first coined in the first paper. The second paper  improved Quotient filter under the name of Rank Select Quotient filter(RSQF). It also developed a counting sketch(Counting Quotient Filter) based on the same ideas. The further analysis of the Quotient filter is based on the improved version of the quotient filter in the second paper. The experiments are done using [khmer package](https://github.com/dib-lab/khmer). Khmer implements the count min sketch and it implements a wrapper for the [cqf library](https://github.com/splatlab/cqf).
+
 
 I tested Counting Quotient Filter implemented in Khmer. The concept looks promising because of the new functionality offered by cqf: data locality, merging, and resizing. However, the implementation needs more work to be of similar quality of Khmer count min sketch. I will only include in this assessment about the downsides since the authors bragged about the upsides more than enough. 
 Summary of the Downsides:
@@ -39,6 +40,8 @@ I found that the r is always set to 8(size +8 ). I tried to change it to lesser 
 From [Storage.hh](https://github.com/shokrof/khmer/blob/DibMaster/include/oxli/storage.hh): Line 418
 
 ![QFStorageInit.png]({{site.baseurl}}/images/QFStorageInit.png)
+
+I tried to use cqf merge function to merge two equally size sketches into a bigger one, but it fails.
 
 ## Accuracy Test
 [Script](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/runTests.sh)
