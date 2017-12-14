@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Counting Quotient Filter Vs Bloom filter and Countmin Sketch
+title: Counting Quotient Filter Assessment
 published: true
 ---
 Sketches provides approximate representation for a data using little amount of memory compared to the real data size. I am covering in this blog post two types: Approximate membership query(AMQ), and Counting Sketches. As the name suggests, AMQ answers if a particular element exists on a set or not. Counting sketch return how many times the element inserted in the sketch. I made assement for Quotient Sketches family [Quotient Filter](http://vldb.org/pvldb/vol5/p1627_michaelabender_vldb2012.pdf) and [Counting Quotient Filter](https://dl.acm.org/citation.cfm?id=3035963).I am comparing it with  [Bloom filter](https://en.wikipedia.org/wiki/Bloom_filter) and [Count min sketch](https://en.wikipedia.org/wiki/Count%E2%80%93min_sketch).
