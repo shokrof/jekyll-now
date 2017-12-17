@@ -7,6 +7,7 @@ Sketches provides approximate representation for a data using little amount of m
 
 The Idea of quotient filter was first coined in the first paper. The second paper  improved Quotient filter under the name of Rank Select Quotient filter(RSQF). It also developed a counting sketch(Counting Quotient Filter) based on the same ideas. The further analysis of the Quotient filter is based on the improved version of the quotient filter in the second paper. The experiments are done using [khmer package](https://github.com/dib-lab/khmer). Khmer implements the count min sketch and it implements a wrapper for the [cqf library](https://github.com/splatlab/cqf).
 
+![QuotientFilter.jpg]({{ site.baseurl }}/images/QuotientFilter.jpg "qf")
 
 I tested Counting Quotient Filter implemented in Khmer. The concept looks promising because of the new functionality offered by cqf: data locality, merging, and resizing. However, the implementation needs more work to be of similar quality of Khmer count min sketch. I will only include in this assessment about the downsides since the authors bragged about the upsides more than enough. 
 Summary of the Downsides:
