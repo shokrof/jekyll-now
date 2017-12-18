@@ -8,7 +8,7 @@ Sketches provides approximate representation for a data using little amount of m
 The Idea of quotient filter was first coined in the first paper. The second paper  improved Quotient filter under the name of Rank Select Quotient filter(RSQF). It also developed a counting sketch(Counting Quotient Filter) based on the same ideas. The further analysis of the Quotient filter is based on the improved version of the quotient filter in the second paper. The experiments are done using [khmer package](https://github.com/dib-lab/khmer). Khmer implements the count min sketch and it implements a wrapper for the [cqf library](https://github.com/splatlab/cqf).
 
 ![QuotientFilter.jpg]({{ site.baseurl }}/images/QuotientFilter.jpg "qf")
-Quotient Filter(QF) is approximate membership query data structure.Like Bloomfilter, QF doesn't produces true negative errors. In other words, If the item doesn't exist in QF, we are certain that the item doesn't exist in the original set. The Above figure discribes the insertion algorithm in the QF. First, the filter splits the hasbits into two components: quotient and the remaining part. Quotient Part is used to determine the target slot. Remaining part is inserted into the target slot.
+Quotient Filter(QF) is approximate membership query data structure.Like Bloomfilter, QF doesn't produces true negative errors. In other words, If the item doesn't exist in QF, we are certain that the item doesn't exist in the original set. The Above figure discribes the insertion algorithm in the QF. First, the filter splits the hasbits into two components: quotient and the remaining part(fingerprint). Quotient Part is used to determine the target slot. Fingerprint is inserted into the target slot.
 
 Insertion Algorithm produces two type of collisions. Soft Collision, When two items have the quotient but the remining part is different. Linear probing is used to find the next slot. Since linear probing doesn't work well in space tight conditions. Original QF add 3 metadata bits per slot to help linear probing to find the next slot.
 
@@ -38,14 +38,22 @@ Summary of the Downsides:
 I used some testcases from khmer to test the new QFCounttable. The test cases cover simple count, save, loading, and counting big values. All the test cases passed except counting the big values. CQF dynamically allocate bigger counters for high frequent items.However, the largest counter is 2 bytes; therefore, It can count up to 65535. If we try to count more than 65535, the counter overflows and counting stars from the beginning.
 
 
+## Merging Issue
+Mod operation is always used before adding the hash value to the sketch. Khmer uses calculate hash value mod sketch range. Since Quotient filter must use the same hash functions to be merged, Only sketches with the same range can be merged. Same range constraint is more relaxed of same sizes. Sketches with bigger sizes but smaller fingerprint can be merged as long as the haves the same number of hashbits. 
+
+From [Storage.hh](https://github.com/shokrof/khmer/blob/DibMaster/include/oxli/storage.hh): Line 438
+![qfadd.png]({{ site.baseurl }}/images/qfadd.png "qf")
+
+
+
+
+
 
 ## Resizing Issue
 
-CQF hashes a kmer and divides the hash bits into two components: quotient and reminder. Quotient part is used to determine a certain slot. Then, CQF put the reminder in this slot.  In Khmer, Mod is applied on the mumur hash bits and filter range(cf.range= 2^(q+r)).
 
-From [Storage.hh](https://github.com/shokrof/khmer/blob/DibMaster/include/oxli/storage.hh): Line 438
 
-![qfadd.png]({{ site.baseurl }}/images/qfadd.png "qf")
+
 
 
 If we need to increase the number of slots for resizing, we need to increase the q without decreasing cf.range(using the same number of hashbits). Changing cf.range is similar to changing the hash function. So, We can increase the q and decrease r and maintain cf.range constant before and after the resizing.
