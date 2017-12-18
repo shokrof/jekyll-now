@@ -21,7 +21,8 @@ Counting Quotient Filter(cqf) is uses the same insertion strategy as RSQF; howev
 Upsides:
 1. Quotient Family has better data locaility than bloom filter. Items are saved in one place. Therefore, Quotient sketches are effieceint  when stored on main memory since it produce fewer cache misses than bloom filter. Quotient sketches also perform well when stored on SSD disk.
 2. Quotient Sketches can be merged easily, like merging sorted lists. Although bloom filters can be merged easily by using OR operation, Only same sized filters can be merged. In case Quotient Sketches, We can merge sketches of different sizes.
-3. Sketches resizing can be implemented using merging feature by simply merging the sketch with bigger one. 
+3. Sketches resizing can be implemented using merging feature by simply merging the sketch with bigger one.
+4. CQF uses variable size counters. So, It is suitable for counting data following ([zipifan distribution](https://en.wikipedia.org/wiki/Zipf%27s_law)) where most the items occures one or two times.
 
 Summary of the Downsides:
 1. When inserted kmer to fully loaded sketch the code just fail. I can’t even catch an exception.
@@ -45,7 +46,7 @@ From [Storage.hh](https://github.com/shokrof/khmer/blob/DibMaster/include/oxli/s
 
 ![qfadd.png]({{ site.baseurl }}/images/qfadd.png "qf")
 
-I did [experiment](https://github.com/splatlab/cqf/blob/master/main.c)to test the above theory. I tried to merge two sketches of different sizes. As expected the code fails at the merging function.
+I did [experiment](https://github.com/splatlab/cqf/blob/master/main.c) to test the above theory. I tried to merge two sketches of different sizes. As expected the code fails at the merging function.
 
 
 
