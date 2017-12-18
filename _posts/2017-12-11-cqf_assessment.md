@@ -17,7 +17,7 @@ RSQF uses less metadata bits(2.125).
 
 Counting Quotient Filter(cqf) is uses the same insertion strategy as RSQF; however, It allows counting the number of instances inserted. If the item inserted for the first or second time, the remaining part is inserted in the target slot. If the item is inserted for the third time, the slot used for inserting the item in the second time is converted to counter. counters can be expanded to accomdate big counts. CQF impelments special encoding technique for the counters to differentiate between the counters and the remaining parts of other items.
 
-I tested Counting Quotient Filter implemented in Khmer. The concept looks promising because of the new functionality offered by cqf: data locality, merging, and resizing. However, the implementation needs more work to be of similar quality of Khmer count min sketch. I will only include in this assessment about the downsides since the authors bragged about the upsides more than enough.
+
 Upsides:
 1. Quotient Family has better data locaility than bloom filter. Items are saved in one place. Therefore, Quotient sketches are effieceint  when stored on main memory since it produce fewer cache misses than bloom filter. Quotient sketches also perform well when stored on SSD disk.
 2. Quotient Sketches can be merged easily, like merging sorted lists. Although bloom filters can be merged easily by using OR operation, Only same sized filters can be merged. In case Quotient Sketches, We can merge sketches of different sizes.
