@@ -42,6 +42,7 @@ I used some testcases from khmer to test the new QFCounttable. The test cases co
 Mod operation is always used before adding the hash value to the sketch. Khmer uses calculate hash value mod sketch range. Since Quotient filter must use the same hash functions to be merged, Only sketches with the same range can be merged. Same range constraint is more relaxed of same sizes. Sketches with bigger sizes but smaller fingerprint can be merged as long as the haves the same number of hashbits. 
 
 From [Storage.hh](https://github.com/shokrof/khmer/blob/DibMaster/include/oxli/storage.hh): Line 438
+
 ![qfadd.png]({{ site.baseurl }}/images/qfadd.png "qf")
 
 I did [experiment](https://github.com/splatlab/cqf/blob/master/main.c)to test the above theory. I tried to merge two sketches of different sizes. As expected the code fails at the merging function.
