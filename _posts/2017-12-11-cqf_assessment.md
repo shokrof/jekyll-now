@@ -8,7 +8,14 @@ Sketches provides approximate representation for a data using little amount of m
 The Idea of quotient filter was first coined in the first paper. The second paper  improved Quotient filter under the name of Rank Select Quotient filter(RSQF). It also developed a counting sketch(Counting Quotient Filter) based on the same ideas. The further analysis of the Quotient filter is based on the improved version of the quotient filter in the second paper. The experiments are done using [khmer package](https://github.com/dib-lab/khmer). Khmer implements the count min sketch and it implements a wrapper for the [cqf library](https://github.com/splatlab/cqf).
 
 ![QuotientFilter.jpg]({{ site.baseurl }}/images/QuotientFilter.jpg "qf")
-Quotient Filter is approximate membership query data structure.Like Bloomfilter, 
+Quotient Filter(QF) is approximate membership query data structure.Like Bloomfilter, QF doesn't produces true negative errors. In other words, If the item doesn't exist in QF, we are certain that the item doesn't exist in the original set. The Above figure discribes the insertion algorithm in the QF. First, the filter splits the hasbits into two components: quotient and the remaining part. Quotient Part is used to determine the target slot. Remaining part is inserted into the target slot.
+
+Insertion Algorithm produces two type of collisions. Soft Collision, When two items have the quotient but the remining part is different. Linear probing is used to find the next slot. Since linear probing doesn't work well in space tight conditions. Original QF add 3 metadata bits per slot to help linear probing to find the next slot.
+
+RSQF uses less metadata bits(2.125).
+
+
+Counting Quotient Filter(cqf) is uses the same insertion strategy as RSQF; however, It allows counting the number of instances inserted. If the item inserted for the first or second time, the remaining part is inserted in the target slot. If the item is inserted for the third time, the slot used for inserting the item in the second time is converted to counter. counters can be expanded to accomdate big counts. CQF impelments special encoding technique for the counters to differentiate between the counters and the remaining parts of other items.
 
 I tested Counting Quotient Filter implemented in Khmer. The concept looks promising because of the new functionality offered by cqf: data locality, merging, and resizing. However, the implementation needs more work to be of similar quality of Khmer count min sketch. I will only include in this assessment about the downsides since the authors bragged about the upsides more than enough. 
 Summary of the Downsides:
