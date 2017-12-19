@@ -23,6 +23,7 @@ Upsides:
 2. Quotient Sketches can be merged easily, like merging sorted lists. Although bloom filters can be merged easily by using OR operation, Only same sized filters can be merged. In case Quotient Sketches, We can merge sketches of different sizes.
 3. Sketches resizing can be implemented using merging feature by simply merging the sketch with bigger one.
 4. CQF uses variable size counters. So, It is suitable for counting data following ([zipifan distribution](https://en.wikipedia.org/wiki/Zipf%27s_law)) where most the items occures one or two times.
+5. I tested loading the cqf with load factors more than 95%, and It passed the test. All the paper calculations are made where the cqf is loaded at 95%, so I was trying to make sure it can be fully loaded without failing([See Load Factor test](#load-factor-test)).
 
 Summary of the Downsides:
 1. When inserted kmer to fully loaded sketch the code just fail. I can’t even catch an exception.
@@ -31,7 +32,6 @@ Summary of the Downsides:
 4. Sketches need to have the same number of hashbits to be merged([See Merging Issue](#merging-issue)).  
 5. Resizing is not implemented in the cqf library, and It can’t be implemented using the current cqf library.([See resizing issue](#resizing-issue))
 6. CQF produces larger counting errors, but less often than countmin sketch([See accuracy test](#accuracy-test)).
-7. I also tested loading the cqf with load factors more than 95%, and It passed the test. All the paper calculations are made where the cqf is loaded at 95%, so I was trying to make sure it can be fully loaded without failing([See Load Factor test](#load-factor-test)).
 
 ## Basic Test
 [Code](https://github.com/shokrof/khmer/blob/DibMaster/tests/test_CQF.py)
@@ -52,7 +52,6 @@ I did [experiment](https://github.com/splatlab/cqf/blob/master/main.c) to test t
 
 
 ## Resizing Issue
-
 
 
 If we need to increase the number of slots for resizing, we need to increase the q without decreasing cf.range(using the same number of hashbits). Changing cf.range is similar to changing the hash function. So, We can increase the q and decrease r and maintain cf.range constant before and after the resizing.
