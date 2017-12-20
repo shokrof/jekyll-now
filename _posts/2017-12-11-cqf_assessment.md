@@ -38,6 +38,15 @@ Summary of the Downsides:
 
 I used some testcases from khmer to test the new QFCounttable. The test cases cover simple count, save, loading, and counting big values. All the test cases passed except counting the big values. CQF dynamically allocate bigger counters for high frequent items.However, the largest counter is 2 bytes; therefore, It can count up to 65535. If we try to count more than 65535, the counter overflows and counting stars from the beginning.
 
+## Size Doubling
+QF Sketches uses power-of-2 sizes. It is very efficient method since BitShifting can be used to calculate moduolous operation. Also, Dividing the hash values into quotient and fingerprint can be done using bit masks. However, it has two disadvantages.
+1. Growing the sketches using size doubling technique is impractical for huge sketches. For example, If you want to grow 32GB sketch, you will need 64GB which may not available.
+2. Using Prime sizes avoids data clustering even with using simple bad hash functions.[ref](http://srinvis.blogspot.com.eg/2006/07/hash-table-lengths-and-prime-numbers.html)
+
+I am proposing new method for Dividing the hash values. It allows the creation of sketches of any arbitrailay size, preferably prime sizes. However, It is less efficient than QF current technique as it contians modoulus and division operation.
+
+![QuotientFilter_Decimal.png]({{ site.baseurl }}/images/QuotientFilter_Decimal.png "qf")
+
 
 ## Merging Issue
 Mod operation is always used before adding the hash value to the sketch. Khmer uses calculate hash value mod sketch range. Since Quotient filter must use the same hash functions to be merged, Only sketches with the same range can be merged. Same range constraint is more relaxed of same sizes. Sketches with bigger sizes but smaller fingerprint can be merged as long as the haves the same number of hashbits. 
