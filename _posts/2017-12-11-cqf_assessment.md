@@ -8,21 +8,21 @@ Sketches provides approximate representation for a data using little amount of m
 The Idea of quotient filter was first coined in the first paper. The second paper  improved Quotient filter under the name of Rank Select Quotient filter(RSQF). It also developed a counting sketch(Counting Quotient Filter) based on the same ideas. The further analysis of the Quotient filter is based on the improved version of the quotient filter in the second paper. The experiments are done using [khmer package](https://github.com/dib-lab/khmer). Khmer implements the count min sketch and it implements a wrapper for the [cqf library](https://github.com/splatlab/cqf).
 
 ![QuotientFilter.jpg]({{ site.baseurl }}/images/QuotientFilter.jpg "qf")
-Quotient Filter(QF) is approximate membership query data structure.Like Bloomfilter, QF doesn't produces true negative errors. In other words, If the item doesn't exist in QF, we are certain that the item doesn't exist in the original set. The Above figure discribes the insertion algorithm in the QF. First, the filter splits the hasbits into two components: quotient and the remaining part(fingerprint). Quotient Part is used to determine the target slot. Fingerprint is inserted into the target slot.
+Quotient Filter(QF) is approximate membership query data structure.Like Bloomfilter, QF doesn't produces true negative errors. In other words, If the item doesn't exist in QF, we are certain that the item doesn't exist in the original set. The Above figure describes the insertion algorithm in the QF. First, the filter splits the hasbits into two components: quotient and the remaining part(fingerprint). Quotient Part is used to determine the target slot. Fingerprint is inserted into the target slot.
 
-Insertion Algorithm produces two type of collisions. Soft Collision, When two items have the quotient but the remining part is different. Linear probing is used to find the next slot. Since linear probing doesn't work well in space tight conditions. Original QF add 3 metadata bits per slot to help linear probing to find the next slot.
+Insertion Algorithm produces two type of collisions. Soft Collision, When two items have the quotient but the remaining part is different. Linear probing is used to find the next slot. Since linear probing doesn't work well in space tight conditions. Original QF add 3 metadata bits per slot to help linear probing to find the next slot.
 
 RSQF uses less metadata bits(2.125).
 
 
-Counting Quotient Filter(cqf) is uses the same insertion strategy as RSQF; however, It allows counting the number of instances inserted. If the item inserted for the first or second time, the remaining part is inserted in the target slot. If the item is inserted for the third time, the slot used for inserting the item in the second time is converted to counter. counters can be expanded to accomdate big counts. CQF impelments special encoding technique for the counters to differentiate between the counters and the remaining parts of other items.
+Counting Quotient Filter(cqf) is uses the same insertion strategy as RSQF; however, It allows counting the number of instances inserted. If the item inserted for the first or second time, the remaining part is inserted in the target slot. If the item is inserted for the third time, the slot used for inserting the item in the second time is converted to counter. counters can be expanded to accommodate big counts. CQF implements special encoding technique for the counters to differentiate between the counters and the remaining parts of other items.
 
 
 Upsides:
-1. Quotient Family has better data locaility than bloom filter. Items are saved in one place. Therefore, Quotient sketches are effieceint  when stored on main memory since it produce fewer cache misses than bloom filter. Quotient sketches also perform well when stored on SSD disk.
+1. Quotient Family has better data locality than bloom filter. Items are saved in one place. Therefore, Quotient sketches are efficient  when stored on main memory since it produce fewer cache misses than bloom filter. Quotient sketches also perform well when stored on SSD disk.
 2. Quotient Sketches can be merged easily, like merging sorted lists. Although bloom filters can be merged easily by using OR operation, Only same sized filters can be merged. In case Quotient Sketches, We can merge sketches of different sizes.
 3. Sketches resizing can be implemented using merging feature by simply merging the sketch with bigger one.
-4. CQF uses variable size counters. So, It is suitable for counting data following ([zipifan distribution](https://en.wikipedia.org/wiki/Zipf%27s_law)) where most the items occures one or two times.
+4. CQF uses variable size counters. So, It is suitable for counting data following ([zipifan distribution](https://en.wikipedia.org/wiki/Zipf%27s_law)) where most the items occurs one or two times.
 5. I tested loading the cqf with load factors more than 95%, and It passed the test. All the paper calculations are made where the cqf is loaded at 95%, so I was trying to make sure it can be fully loaded without failing([See Load Factor test](#load-factor-test)).
 
 Summary of the Downsides:
@@ -39,17 +39,17 @@ Summary of the Downsides:
 I used some testcases from khmer to test the new QFCounttable. The test cases cover simple count, save, loading, and counting big values. All the test cases passed except counting the big values. CQF dynamically allocate bigger counters for high frequent items.However, the largest counter is 2 bytes; therefore, It can count up to 65535. If we try to count more than 65535, the counter overflows and counting stars from the beginning.
 
 ## Size Doubling
-QF Sketches uses power-of-2 sizes. It is very efficient method since BitShifting can be used to calculate moduolous operation. Also, Dividing the hash values into quotient and fingerprint can be done using bit masks. However, it has two disadvantages.
+QF Sketches uses power-of-2 sizes. It is very efficient method since bit shifting can be used to calculate modulus operation. Also, Dividing the hash values into quotient and fingerprint can be done using bit masks. However, it has two disadvantages.
 1. Growing the sketches using size doubling technique is impractical for huge sketches. For example, If you want to grow 32GB sketch, you will need 64GB which may not available.
 2. Using Prime sizes avoids data clustering even with using simple bad hash functions.[ref](http://srinvis.blogspot.com.eg/2006/07/hash-table-lengths-and-prime-numbers.html)
 
-I am proposing new method for Dividing the hash values. It allows the creation of sketches of any arbitrailay size, preferably prime sizes. However, It is less efficient than QF current technique as it contians modoulus and division operation.
+I am proposing new method for Dividing the hash values. It allows the creation of sketches of any arbitrarily size, preferably prime sizes. However, It is less efficient than QF current technique as it contains modulus and division operation.
 
 ![QuotientFilter_Decimal.png]({{ site.baseurl }}/images/QuotientFilter_Decimal.png "qf")
 
 
 ## Merging Issue
-Mod operation is always used before adding the hash value to the sketch. Khmer uses calculate hash value mod sketch range. Since Quotient filter must use the same hash functions to be merged, Only sketches with the same range can be merged. Same range constraint is more relaxed of same sizes. Sketches with bigger sizes but smaller fingerprint can be merged as long as the haves the same number of hashbits. 
+Mod operation is always used before adding the hash value to the sketch. Khmer uses calculate hash value mod sketch range. Since Quotient filter must use the same hash functions to be merged, Only sketches with the same range can be merged. Same range constraint is more relaxed of same sizes. Sketches with bigger sizes but smaller fingerprint can be merged as long as the haves the same number of hashbits.
 
 From [Storage.hh](https://github.com/shokrof/khmer/blob/DibMaster/include/oxli/storage.hh): Line 438
 
@@ -76,7 +76,7 @@ I tried to use cqf merge function to merge two equally size sketches into a bigg
 ## Accuracy Test
 [Script](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/runTests.sh)
 
-I am trying to compare the accuracy of khmer implementation of both cqf and count min sketch. 
+I am trying to compare the accuracy of khmer implementation of both cqf and count min sketch.
 1. I created a dataset of kmers
 2. Load the sketch using the dataset
 3. Calculate the accuracy of kmers exist in the sketch.
@@ -84,8 +84,8 @@ I am trying to compare the accuracy of khmer implementation of both cqf and coun
 
 
 ### Dataset
-I created a simulated dataset for testing CQF implementation in Khmer. I developed [script](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/generateSeq.py) to generate kmers with left skewed frequency([zipifan distribution](https://en.wikipedia.org/wiki/Zipf%27s_law)). 
-The script generates 3 files: 
+I created a simulated dataset for testing CQF implementation in Khmer. I developed [script](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/generateSeq.py) to generate kmers with left skewed frequency([zipifan distribution](https://en.wikipedia.org/wiki/Zipf%27s_law)).
+The script generates 3 files:
 1. dataset: kmers to be counted.
 2. TruekmerCount:kmers count in format “kmer\tcount”.
 3. Unseen Kmers: kmers that don't exist in the previous dataset.
@@ -103,7 +103,7 @@ I used simple accuracy measure. I calculate the absolute difference between the 
 
 ![data1000000.NonExist.png]({{ site.baseurl }}/images/data1000000.NonExist.png)
 
-As Expected, The cqf has less errors than count min sketch, but the cqf errors are more scattered. 
+As Expected, The cqf has less errors than count min sketch, but the cqf errors are more scattered.
 
 ## Load Factor Test
 [RSQF Code](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/testLoadFactor.py),[CQF Code](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/testLoadFactorCQF.py)
@@ -113,7 +113,7 @@ As Expected, The cqf has less errors than count min sketch, but the cqf errors a
 
 
 In Table2 from [cqf paper](https://www3.cs.stonybrook.edu/~ppandey/files/p775-pandey.pdf),  Bit per element is inversely proportional to the load factor of the RSQF. For load factor 95%, RSQF is more space efficient than bloom filter for all fpr values less than 1/64. Here, I am testing loading capacity of cqf . 
-The first obstacle is to calculate the load factor for the cqf. After reviewing cqf code, I found that the number of slots that are actually allocated is more than the number passed as input. First, cqf code adds 10*sqrt(nslots) to the number of slots. Second, the result is rounded up to the next number divisible by 64. 
+The first obstacle is to calculate the load factor for the cqf. After reviewing cqf code, I found that the number of slots that are actually allocated is more than the number passed as input. First, cqf code adds 10*sqrt(nslots) to the number of slots. Second, the result is rounded up to the next number divisible by 64.
 
 I created QFCounttable by passing 8192 as input. 9152 slots are created. I gradually increase the load factor by inserting more unique kmers. The program succeeded to insert 9050 unique kmers(98% load factor). The number of hash collisions was 24.Code
 
