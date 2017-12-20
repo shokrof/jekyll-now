@@ -13,12 +13,12 @@ Quotient Filter(QF) is approximate membership query data structure.Like Bloom fi
 
 Insertion Algorithm produces two type of collisions. Soft Collision, When two items have the quotient but the remaining part is different. Linear probing is used to find the next slot. Since linear probing doesn't work well in space tight conditions. QF adds 3 metadata bits per slot to help linear probing to find the next slot.
 
-RSQF uses fewer metadata bits(2.125).
+RSQF uses fewer metadata bits(2.125). RSQF store two bitvector of size filter: Occupieds, and runends. Using Rank and Select method RSQF can find the start and end positions of all slots of the same quotient. RSQF also store offsets array for runends to avoid scanning the whole vector. RSQF only stores the offest for every 64th slot.   
 
 Since RSQF is better than QF in all aspects, I will only include in the assessment RSQF and I will refer to it as Quotient Filter.
 
 ## Counting Quotient Filter
-Counting Quotient Filter(cqf) is uses the same insertion strategy as RSQF; however, It allows counting the number of instances inserted. If the item inserted for the first or second time, the remaining part is inserted in the target slot. If the item is inserted for the third time, the slot used for inserting the item in the second time is converted to counter. counters can be expanded to accommodate big counts. CQF implements special encoding technique for the counters to differentiate between the counters and the remaining parts of other items.
+Counting Quotient Filter(cqf) is uses the same insertion strategy as RSQF; however, It allows counting the number of instances inserted. If the item inserted for the first or second time, the remaining part is inserted in the target slot. If the item is inserted for the third time, the slot used for inserting the item in the second time is converted to counter. counters can be expanded using more slots to accommodate big counts. CQF implements special encoding technique for the counters to differentiate between the counters and the remaining parts of other items.
 
 
 ## Assessment Summary
