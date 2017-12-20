@@ -146,3 +146,5 @@ I am comparing Quotient Filter with Bloom Filter. I used Bloom filter implemente
 
 
  ![BloomVsCQF.png]({{ site.baseurl }}/images/BloomVsCQF.png)
+
+ As Mentioned in the paper, Quotient filter is space efficient when the accuracy is below 1/64.
