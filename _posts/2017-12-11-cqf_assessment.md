@@ -142,7 +142,7 @@ As Expected, The cqf has fewer errors than count-min sketch, but the cqf errors 
 
 ### Experiment 2 Quotient Filter Vs Bloom filter
 
-I am comparing Quotient Filter with Bloom Filter. I used Bloom filter implemented in Khmer. I could not find an implementation for Quotient Filter(RSQF), So I used CQF and Unique kmers dataset. I created Bloom filter and Quotient Filter of size approximate to 524K. Then, I iteratively inserted kmers in both filters and measured the accuracy. For Accuracy, I queried the filters with new kmers and calculated the number of the false positives.
+I am comparing Quotient Filter with Bloom Filter [Test](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/testSketchesAccuracy.py). I used Bloom filter implemented in Khmer. I could not find an implementation for Quotient Filter(RSQF), So I used CQF and Unique kmers dataset. I created Bloom filter and Quotient Filter of size approximate to 524K. Then, I iteratively inserted kmers in both filters and measured the accuracy. For Accuracy, I queried the filters with new kmers and calculated the number of the false positives.
 
 
  ![BloomVsCQF.png]({{ site.baseurl }}/images/BloomVsCQF.png)
