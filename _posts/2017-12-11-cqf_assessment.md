@@ -71,12 +71,7 @@ I used some test cases from Khmer to test the new QFCounttable. The test cases c
 ## Size Doubling
 QF Sketches uses power-of-2 sizes. It is very efficient method since bit shifting can be used to calculate modulus operation. Also, Dividing the hash values into quotient and fingerprint can be done using bit masks. However, it has two disadvantages.
 1. Growing the sketches using size doubling technique is impractical for huge sketches. For example, If you want to grow 32GB sketch, you will need 64GB which may not available.
-2. Using Prime sizes avoids data clustering even by using simple bad hash functions. [ref](http://srinvis.blogspot.com.eg/2006/07/hash-table-lengths-and-prime-numbers.html)
-
-### Suggestion
-I am proposing a new method for Dividing the hash values. It allows the creation of sketches of any arbitrary size, preferably prime sizes. However, It is less efficient than QF current technique as it contains modulus and division operation.
-
-![QuotientFilter_Decimal.png]({{ site.baseurl }}/images/QuotientFilter_Decimal.png "qf")
+2. Using Prime sizes avoids data clustering even when using simple bad hash functions. [ref](http://srinvis.blogspot.com.eg/2006/07/hash-table-lengths-and-prime-numbers.html)
 
 
 ## Merging Issue
