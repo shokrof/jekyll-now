@@ -1,24 +1,28 @@
 ---
 layout: post
-title: Quotient Sketches Assessment
+title: Counting Quotient Filter take over?
 published: true
 ---
-Sketches provide approximate representation for a data using a little amount of memory compared to the real data size. I am covering in this blog post two types of [Approximate membership query(AMQ)](http://www.cs.cmu.edu/~lblum/flac/Presentations/Szabo-Wexler_ApproximateSetMembership.pdf). As the name suggests, AMQ answers if a particular element exists on a sketch or not. Some AMQs return how many times the element inserted in the sketch. I made assessment for Quotient Sketches family [Quotient Filter](http://vldb.org/pvldb/vol5/p1627_michaelabender_vldb2012.pdf) and [Counting Quotient Filter](https://dl.acm.org/citation.cfm?id=3035963). I am comparing it with  [Bloom filter](https://en.wikipedia.org/wiki/Bloom_filter) and [Count min sketch](https://en.wikipedia.org/wiki/Count%E2%80%93min_sketch).
+[Approximate membership query (AMQ)](http://www.cs.cmu.edu/~lblum/flac/Presentations/Szabo-Wexler_ApproximateSetMembership.pdf) data structures provide approximate representation for data using smaller amount of memory compared to the real data size. As the name suggests, AMQ answers if a particular element exists or not in a given dataset. Counting variants of AMQs return how many times the element was seen in the set. 
 
-The Idea of quotient filter was first coined in [Michael A. Bender et al](http://vldb.org/pvldb/vol5/p1627_michaelabender_vldb2012.pdf) . [Prashant Pandey et al](https://dl.acm.org/citation.cfm?id=3035963) improves Quotient filter(QF) under the name of Rank Select Quotient filter(RSQF). It also develops a counting sketch(Counting Quotient Filter) based on the same idea. The experiments are done using [khmer package](https://github.com/dib-lab/khmer). Khmer implements the count-min sketch and it implements a wrapper for the [cqf library](https://github.com/splatlab/cqf).
+Quotient filter (QF) is an AMQ that was first coined by [Michael A. Bender et al](http://vldb.org/pvldb/vol5/p1627_michaelabender_vldb2012.pdf) as an alternative to the commonly used Bloom filter to solve its chronic poor data locality. [Prashant Pandey et al](https://dl.acm.org/citation.cfm?id=3035963) published two enhanced versions of QF under the name of Rank Select Quotient filter(RSQF) and Counting Quotient Filter (CQF). [khmer](https://github.com/dib-lab/khmer) is a k-mer counting software that uses another AMQ called [count-min sketch] (https://en.wikipedia.org/wiki/Count%E2%80%93min_sketch); a counting variant of [Bloom filter](https://en.wikipedia.org/wiki/Bloom_filter). Recently Khmer has implemented a wrapper for the [cqf library](https://github.com/splatlab/cqf) to test its performance. In this blog post I am using the Khmer wrapper to assess the CQF and compare it with Bloom filter and Count min sketch.
+
 
 ## Quotient Filter
 ![QuotientFilter.jpg]({{ site.baseurl }}/images/QuotientFilter.jpg "qf")
-Quotient Filter(QF) is approximate membership query data structure.Like Bloom filter, QF doesn't produces true negative errors. In other words, If the item doesn't exist in QF, we are certain that the item doesn't exist in the original set. The above figure describes the insertion algorithm in the QF. First, the filter splits the hash-bits into two components: quotient and the remaining part(fingerprint). Quotient Part is used to determine the target slot. The fingerprint is inserted into the target slot.
+QF, like Bloom filter, doesn't produce false negative errors.. In other words, If the item doesn't exist in QF, we are certain that the item doesn't exist in the original set. The above figure describes the insertion algorithm in the QF. First, the filter splits the hash-bits into two components: quotient and the remaining part(fingerprint). Quotient Part is used to determine the target slot. The fingerprint is inserted into the target slot.
 
-Insertion Algorithm produces two type of collisions. Soft Collision, When two items have the quotient but the remaining part is different. Linear probing is used to find the next slot. Since linear probing doesn't work well in space tight conditions. QF adds 3 metadata bits per slot to help linear probing to find the next slot.
+Insertion Algorithm produces two type of collisions. Soft Collision: When two items have the quotient but the remaining part is different. Linear probing is used to find the next slot. Since linear probing doesn't work well in space tight conditions. QF adds 3 metadata bits per slot to help linear probing to find the next slot.
 
 RSQF uses fewer metadata bits(2.125). RSQF store two bitvector of size filter: Occupieds, and runends. Using Rank and Select method RSQF can find the start and end positions of all slots of the same quotient. RSQF also store offsets array for runends to avoid scanning the whole vector. RSQF only stores the offest for every 64th slot.   
 
-Since RSQF is better than QF in all aspects, I will only include in the assessment RSQF and I will refer to it as Quotient Filter.
+
 
 ## Counting Quotient Filter
-Counting Quotient Filter(cqf) is uses the same insertion strategy as RSQF; however, It allows counting the number of instances inserted. If the item inserted for the first or second time, the remaining part is inserted in the target slot. If the item is inserted for the third time, the slot used for inserting the item in the second time is converted to counter. counters can be expanded using more slots to accommodate big counts. CQF implements special encoding technique for the counters to differentiate between the counters and the remaining parts of other items.
+
+Cqf uses the same insertion strategy as RSQF; however, It allows counting the number of instances inserted. If the item inserted more than once, enough slots immediately following that element’s remainder are used to encode for its count.
+
+
 
 
 ## Assessment Summary
