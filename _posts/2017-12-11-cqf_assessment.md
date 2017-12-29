@@ -3,18 +3,16 @@ layout: post
 title: Counting Quotient Filter take over?
 published: true
 ---
-[Approximate membership query (AMQ)](http://www.cs.cmu.edu/~lblum/flac/Presentations/Szabo-Wexler_ApproximateSetMembership.pdf) data structures provide approximate representation for data using smaller amount of memory compared to the real data size. As the name suggests, AMQ answers if a particular element exists or not in a given dataset. Counting variants of AMQs return how many times the element was seen in the set. 
+[Approximate membership query (AMQ)](http://www.cs.cmu.edu/~lblum/flac/Presentations/Szabo-Wexler_ApproximateSetMembership.pdf) data structures provide approximate representation for data using smaller amount of memory compared to the real data size. As the name suggests, AMQ answers if a particular element exists or not in a given dataset. Counting variants of AMQs return how many times the element was seen in the set.
 
-Quotient filter (QF) is an AMQ that was first coined by [Michael A. Bender et al](http://vldb.org/pvldb/vol5/p1627_michaelabender_vldb2012.pdf) as an alternative to the commonly used Bloom filter to solve its chronic poor data locality. [Prashant Pandey et al](https://dl.acm.org/citation.cfm?id=3035963) published two enhanced versions of QF under the name of Rank Select Quotient filter(RSQF) and Counting Quotient Filter (CQF). [khmer](https://github.com/dib-lab/khmer) is a k-mer counting software that uses another AMQ called [count-min sketch] (https://en.wikipedia.org/wiki/Count%E2%80%93min_sketch); a counting variant of [Bloom filter](https://en.wikipedia.org/wiki/Bloom_filter). Recently Khmer has implemented a wrapper for the [cqf library](https://github.com/splatlab/cqf) to test its performance. In this blog post I am using the Khmer wrapper to assess the CQF and compare it with Bloom filter and Count min sketch.
+Quotient filter (QF) is an AMQ that was first coined by [Michael A. Bender et al](http://vldb.org/pvldb/vol5/p1627_michaelabender_vldb2012.pdf) as an alternative to the commonly used Bloom filter to solve its chronic poor data locality. [Prashant Pandey et al](https://dl.acm.org/citation.cfm?id=3035963) published two enhanced versions of QF under the name of Rank Select Quotient filter(RSQF) and Counting Quotient Filter (CQF). [khmer](https://github.com/dib-lab/khmer) is a k-mer counting software that uses another AMQ called [count-min sketch](https://en.wikipedia.org/wiki/Count%E2%80%93min_sketch); a counting variant of [Bloom filter](https://en.wikipedia.org/wiki/Bloom_filter). Recently Khmer has implemented a wrapper for the [cqf library](https://github.com/splatlab/cqf) to test its performance. In this blog post I am using the Khmer wrapper to assess the CQF and compare it with Bloom filter and Count min sketch.
 
 
 ## Quotient Filter
 ![QuotientFilter.jpg]({{ site.baseurl }}/images/QuotientFilter.jpg "qf")
-QF, like Bloom filter, doesn't produce false negative errors.. In other words, If the item doesn't exist in QF, we are certain that the item doesn't exist in the original set. The above figure describes the insertion algorithm in the QF. First, the filter splits the hash-bits into two components: quotient and the remaining part(fingerprint). Quotient Part is used to determine the target slot. The fingerprint is inserted into the target slot.
+QF, like Bloom filter, doesn't produce false negative errors. In other words, If the item doesn't exist in QF, we are certain that the item doesn't exist in the original set. However, QF can produce false positive errors. For items having the same hash values, QF mistakenly report all of them exists if only one exists in the filter. The above figure describes the insertion algorithm in the QF. First, the filter splits the hash-bits into two components: quotient and the remaining part. Quotient Part is used to determine the target slot. The remaining is inserted into the target slot.
 
-Insertion Algorithm produces two type of collisions. Soft Collision: When two items have the quotient but the remaining part is different. Linear probing is used to find the next slot. Since linear probing doesn't work well in space tight conditions. QF adds 3 metadata bits per slot to help linear probing to find the next slot.
-
-RSQF uses fewer metadata bits(2.125). RSQF store two bitvector of size filter: Occupieds, and runends. Using Rank and Select method RSQF can find the start and end positions of all slots of the same quotient. RSQF also store offsets array for runends to avoid scanning the whole vector. RSQF only stores the offest for every 64th slot.   
+Insertion Algorithm uses a variant of linear probing to resolve collisions. If we are trying to insert item to occupied slots, linear probing uses the next vacant slot. Linear probing is very simple, and have good data locality, but It works well only when the load factor is low([reference](https://en.wikipedia.org/wiki/Linear_probing#Analysis)). In Space tight conditions, long contagious occupied slots(runs) decreases the performance of both inserting and query items. Qf overcome linear problems short comes by two changes. First, It keep items in the run in sorted order. Second, It uses meta data to determine the start and the end of the runs. QF uses 3 metadata bits per slot . While, RSQF only uses 2.125 metadata bits per slot and it is also have better data locality.
 
 
 
@@ -73,13 +71,13 @@ I used some test cases from Khmer to test the new QFCounttable. The test cases c
 2. Counters should have maximum values to avoid overflow. 65535 is reasonable for kmer counting application.
 
 ## Size Doubling
-QF Sketches uses power-of-2 sizes. It is very efficient method since bit shifting can be used to calculate modulus operation. Also, Dividing the hash values into quotient and fingerprint can be done using bit masks. However, it has two disadvantages.
+QF Sketches uses power-of-2 sizes. It is very efficient method since bit shifting can be used to calculate modulus operation. Also, Dividing the hash values into quotient and remaining can be done using bit masks. However, it has two disadvantages.
 1. Growing the sketches using size doubling technique is impractical for huge sketches. For example, If you want to grow 32GB sketch, you will need 64GB which may not available.
 2. Using Prime sizes avoids data clustering even when using simple bad hash functions. [ref](http://srinvis.blogspot.com.eg/2006/07/hash-table-lengths-and-prime-numbers.html)
 
 
 ## Merging Issue
-Mod operation is always used before adding the hash value to the sketch. Khmer uses calculate hash value mod sketch range. Since Quotient filter must use the same hash functions to be merged, Only sketches with the same range can be merged. Same range constraint is more relaxed of same sizes. Sketches with bigger sizes but smaller fingerprint can be merged as long as the haves the same number of hash-bits.
+Mod operation is always used before adding the hash value to the sketch. Khmer uses calculate hash value mod sketch range. Since Quotient filter must use the same hash functions to be merged, Only sketches with the same range can be merged. Same range constraint is more relaxed of same sizes. Sketches with bigger sizes but smaller remaining parts can be merged as long as the haves the same number of hash-bits.
 
 From [Storage.hh](https://github.com/shokrof/khmer/blob/DibMaster/include/oxli/storage.hh): Line 438
 
@@ -93,7 +91,7 @@ I did [experiment](https://github.com/splatlab/cqf/blob/master/main.c) to test t
 ## Resizing Issue
 
 
-If we need to increase the number of slots for resizing, we need to increase the q without decreasing cf.range(using the same number of hash-bits). Changing cf.range is similar to changing the hash function. So, We can increase the q and decrease fingerprint's size and maintain cf.range constant before and after the resizing.
+If we need to increase the number of slots for resizing, we need to increase the q without decreasing cf.range(using the same number of hash-bits). Changing cf.range is similar to changing the hash function. So, We can increase the q and decrease remaining's size and maintain cf.range constant before and after the resizing.
 
 I found that the r is always set to 8(size +8 ). I tried to change it to lesser values(2-7), but the code fails the basic test. Therefore. I concluded we can't implement resizing technique described in cqf paper using the current cqf implementation. Unless this bug is fixed.
 
