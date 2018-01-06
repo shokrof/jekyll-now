@@ -20,15 +20,15 @@ Insertion Algorithm uses a variant of linear probing to resolve collisions. If w
 
 Cqf uses the same insertion strategy as RSQF; however, It allows counting the number of instances inserted. If the item inserted more than once, enough slots immediately following that element’s remainder are used to encode for its count.
 
-
+## Counting Quotient Filter Advantages
+1. Quotient Family has better data locality than bloom filter. Items are saved in one place. Therefore, Quotient sketches are efficient when stored in main memory since it produces fewer cache misses than bloom filter. Quotient sketches also perform well when stored on SSD disk.
+2. Quotient Sketches can be merged easily, like merging sorted lists. Although bloom filters can be merged easily by using OR operation, Only same sized filters can be merged. In case of Quotient Sketches, We can merge sketches of different sizes.
+3. Sketches resizing is possible but under certain conditions.
+4. CQF uses variable size counters. So, It is suitable for counting data following ([zipifan distribution](https://en.wikipedia.org/wiki/Zipf%27s_law)) where most the items occur one or two times.
 
 
 ## Assessment Summary
 ### Upsides
-1. Quotient Family has better data locality than bloom filter. Items are saved in one place. Therefore, Quotient sketches are efficient when stored in main memory since it produces fewer cache misses than bloom filter. Quotient sketches also perform well when stored on SSD disk.
-2. Quotient Sketches can be merged easily, like merging sorted lists. Although bloom filters can be merged easily by using OR operation, Only same sized filters can be merged. In case of Quotient Sketches, We can merge sketches of different sizes.
-3. Sketches resizing can be implemented using merging feature by simply merging the sketch with a bigger one.
-4. CQF uses variable size counters. So, It is suitable for counting data following ([zipifan distribution](https://en.wikipedia.org/wiki/Zipf%27s_law)) where most the items occur one or two times.
 5. I tested loading the cqf with load factors more than 95%, and It passed the test. All the paper calculations are made where the cqf is loaded at 95%, so I was trying to make sure it can be fully loaded without failing([See Load Factor test](#load-factor-test)).
 
 ### Downsides
