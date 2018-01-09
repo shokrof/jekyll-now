@@ -27,17 +27,13 @@ Cqf uses the same insertion strategy as RSQF; however, It allows counting the nu
 4. CQF uses variable size counters. So, It is suitable for counting data following ([zipifan distribution](https://en.wikipedia.org/wiki/Zipf%27s_law)) where most the items occur one or two times.
 
 
-## Assessment Summary
-### Upsides
-5. I tested loading the cqf with load factors more than 95%, and It passed the test. All the paper calculations are made where the cqf is loaded at 95%, so I was trying to make sure it can be fully loaded without failing([See Load Factor test](#load-factor-test)).
+## Tests
+1. [CQF Unit Test](#cqf-unit-test) includes: insert/query items, save/load using hard disk, and inserting highly frequent items.
+2. Load factor Test
+3. Merging Test
+4. Resizing Test
+5. Accuracy Test
 
-### Downsides
-1. When inserted kmer to fully loaded sketch the code just fail. I can’t even catch an exception.
-2. Sketch uses variable length counter for each kmer with max 2 bytes. If the kmer count exceeds 65535. The counter overflow and the value resets([See Basic Test](#basic-test))
-3. Sketch size can only be of the power-of-two. If you want to increase the sketch size you need to double it ([See Size Doubling](#size-doubling)).
-4. Sketches need to have the same number of hash-bits to be merged([See Merging Issue](#merging-issue)).  
-5. Resizing is not implemented in the cqf library, and It can’t be implemented using the current cqf library.([See resizing issue](#resizing-issue))
-6. CQF produces larger counting errors, but less often than the count-min sketch([See accuracy test](#accuracy-test)).
 ## Dataset Description
 
 I created a simulated dataset for testing CQF and comparing it with bloom filter and countmin sketch. I developed [script](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/generateSeq.py) to generate kmers with left skewed frequency([zipifan distribution](https://en.wikipedia.org/wiki/Zipf%27s_law)).
@@ -50,6 +46,18 @@ The script generates 3 files:
 I generated 1M kmer of length 20 and 10K unseen kmers.Here is the frequency distribution for the 1M kmers
 ![data1000000.goldHist.png]({{ site.baseurl }}/images/data1000000.goldHist.png)
 
+## CQF Unit Test
+I used some test cases from Khmer to test CQF. The test cases cover simple insert/query items into the filter, save filter to hard disk, load from hard disk, and inserting items many times(> 65535 times). All the test cases passed except counting highly frequent items. CQF dynamically allocate bigger counters for high frequent items. However, the largest counter is 2 bytes; therefore, It can count up to 65535. If we try to count more than 65535, the counter overflows and counting stars from the beginning.
+
+Python unit test is used to implement the [test-cases](https://github.com/shokrof/khmer/blob/DibMaster/tests/test_CQF.py)
+ in khmer.
+Usage: py.test tests/test_CQF.py
+
+
+### Suggestion
+1. qf_insert function should return false if the filter is fully loaded.
+2. Counters should have maximum values to avoid overflow. 65535 is reasonable for kmer counting application.
+
 
 
 ## Load Factor Test
@@ -61,14 +69,6 @@ I am trying to find the maximum loading factor that can achieved by cqf. I am us
 
 
 
-## Basic Test
-[Code](https://github.com/shokrof/khmer/blob/DibMaster/tests/test_CQF.py)
-
-I used some test cases from Khmer to test the new QFCounttable. The test cases cover simple count, save, loading, and counting big values. All the test cases passed except counting the big values. CQF dynamically allocate bigger counters for high frequent items.However, the largest counter is 2 bytes; therefore, It can count up to 65535. If we try to count more than 65535, the counter overflows and counting stars from the beginning.
-
-### Suggestion
-1. qf_insert function should return false if the filter is fully loaded.
-2. Counters should have maximum values to avoid overflow. 65535 is reasonable for kmer counting application.
 
 ## Size Doubling
 QF Sketches uses power-of-2 sizes. It is very efficient method since bit shifting can be used to calculate modulus operation. Also, Dividing the hash values into quotient and remaining can be done using bit masks. However, it has two disadvantages.
@@ -136,3 +136,15 @@ I am comparing Quotient Filter with Bloom Filter [Test](https://github.com/shokr
  ![BloomVsCQF.png]({{ site.baseurl }}/images/BloomVsCQF.png)
 
  As Mentioned in the paper, Quotient filter is space efficient when the accuracy is below 1/64.
+
+
+## Assessment Summary
+### Upsides
+
+### Downsides
+1. When inserted kmer to fully loaded sketch the code just fail. I can’t even catch an exception.
+2. Sketch uses variable length counter for each kmer with max 2 bytes. If the kmer count exceeds 65535. The counter overflow and the value resets([CQF Unit Test](#cqf-unit-test))
+3. Sketch size can only be of the power-of-two. If you want to increase the sketch size you need to double it ([See Size Doubling](#size-doubling)).
+4. Sketches need to have the same number of hash-bits to be merged([See Merging Issue](#merging-issue)).  
+5. Resizing is not implemented in the cqf library, and It can’t be implemented using the current cqf library.([See resizing issue](#resizing-issue))
+6. CQF produces larger counting errors, but less often than the count-min sketch([See accuracy test](#accuracy-test)).
