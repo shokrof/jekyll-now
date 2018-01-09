@@ -38,27 +38,27 @@ Cqf uses the same insertion strategy as RSQF; however, It allows counting the nu
 4. Sketches need to have the same number of hash-bits to be merged([See Merging Issue](#merging-issue)).  
 5. Resizing is not implemented in the cqf library, and It can’t be implemented using the current cqf library.([See resizing issue](#resizing-issue))
 6. CQF produces larger counting errors, but less often than the count-min sketch([See accuracy test](#accuracy-test)).
+## Dataset Description
+
+I created a simulated dataset for testing CQF and comparing it with bloom filter and countmin sketch. I developed [script](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/generateSeq.py) to generate kmers with left skewed frequency([zipifan distribution](https://en.wikipedia.org/wiki/Zipf%27s_law)).
+
+The script generates 3 files:
+1. dataset: kmers to be counted.
+2. TruekmerCount:kmers count in format “kmer\tcount”.
+3. Unseen Kmers: kmers that don't exist in the previous dataset.
+
+I generated 1M kmer of length 20 and 10K unseen kmers.Here is the frequency distribution for the 1M kmers
+![data1000000.goldHist.png]({{ site.baseurl }}/images/data1000000.goldHist.png)
+
+
 
 ## Load Factor Test
 [RSQF Code](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/testLoadFactor.py),[CQF Code](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/testLoadFactorCQF.py)
 
-![filtersBitsPerelement.png]({{ site.baseurl }}/images/filtersBitsPerelement.png)
-
-
-
-In Table2 from [cqf paper](https://www3.cs.stonybrook.edu/~ppandey/files/p775-pandey.pdf),  Bit per element is inversely proportional to the load factor of the RSQF. For load factor 95%, RSQF is more space efficient than bloom filter for all fpr values less than 1/64. Here, I am testing loading capacity of cqf .
-The first obstacle is to calculate the load factor for the cqf. After reviewing cqf code, I found that the number of slots that are actually allocated is more than the number passed as input. First, cqf code adds 10*sqrt(nslots) to the number of slots. Second, the result is rounded up to the next number divisible by 64.
-
-I created QFCounttable by passing 8192 as input. 9152 slots are created. I gradually increase the load factor by inserting more unique kmers. The program succeeded to insert 9050 unique kmers(98% load factor). The number of hash collisions was 24.Code
-
-
-
-
-
-CQF testing,I am trying to test the loading of cqf with uniformly distributed kmers. I repeated the above experiment but each kmer is repeated M times. I ran the experiments with different values of M and recorded the maximum number of kmers that can be inserted.
-Values of M are 2**i-1 for i in 1:16
+I am trying to find the maximum loading factor that can achieved by cqf. I am using uniform distributed kmers dataset. I created QFCounttable by passing 8192 as input. 9152 slots are created. In Every run, I iteratively insert kmers repeated M times and record the maximum number of unique kmers that can be inserted. Values of M are 2**i-1 for i in 1:16.Result is shown in the following graph.
 
 ![loadingCQF.png]({{ site.baseurl }}/images/loadingCQF.png)
+
 
 
 ## Basic Test
@@ -114,15 +114,6 @@ I am trying to compare the accuracy of Khmer implementation of both cqf and coun
 4. Calculate the accuracy of kmers don’t exist in the sketch.
 
 
-### Dataset
-I created a simulated dataset for testing CQF implementation in Khmer. I developed [script](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/generateSeq.py) to generate kmers with left skewed frequency([zipifan distribution](https://en.wikipedia.org/wiki/Zipf%27s_law)).
-The script generates 3 files:
-1. dataset: kmers to be counted.
-2. TruekmerCount:kmers count in format “kmer\tcount”.
-3. Unseen Kmers: kmers that don't exist in the previous dataset.
-
-I generated 1M kmer of length 20 and 10K unseen kmers.Here is the frequency distribution for the 1M kmers
-![data1000000.goldHist.png]({{ site.baseurl }}/images/data1000000.goldHist.png)
 
 ### Experiment 1 (CQF Vs Count-min sketch):
 I did the experiment using different sketch sizes. Sketch size is an approximate number for the actual size allocated in the memory.
