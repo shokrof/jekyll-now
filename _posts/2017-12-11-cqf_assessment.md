@@ -27,99 +27,95 @@ Cqf uses the same insertion strategy as RSQF; however, It allows counting the nu
 4. CQF uses variable size counters. So, It is suitable for counting data following ([zipifan distribution](https://en.wikipedia.org/wiki/Zipf%27s_law)) where most the items occur one or two times.
 
 
-## Tests
-1. [CQF Unit Test](#cqf-unit-test) includes: insert/query items, save/load using hard disk, and inserting highly frequent items.
-2. Load factor Test
-3. Merging Test
-4. Resizing Test
-5. Accuracy Test
+## CQF Assessment
+All the tests below can be found on my [khmer github repository](https://github.com/shokrof/khmer/tree/DibMaster).
 
-## Dataset Description
+### Install & Run
+1. Clone DibMaster branch
+2. Install Khmer [guide](http://khmer.readthedocs.io/en/v2.1.2/dev/getting-started.html).
+3. run [runTests.sh](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/runTests.sh) script to generate the test data and run all tests.
+
+### Tests:
+1. [CQF unit-test](#cqf-unit-test)
+2. [Load factor Test](#load-factor-test)
+3. [Accuracy Test](#accuracy-test)
+4. [Merging Test](#merging-test)
+5. [Resizing Test](#resizing-test)
+
+
+### Dataset Description
 
 I created a simulated dataset for testing CQF and comparing it with bloom filter and countmin sketch. I developed [script](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/generateSeq.py) to generate kmers with left skewed frequency([zipifan distribution](https://en.wikipedia.org/wiki/Zipf%27s_law)).
 
-The script generates 3 files:
-1. dataset: kmers to be counted.
-2. TruekmerCount:kmers count in format “kmer\tcount”.
-3. Unseen Kmers: kmers that don't exist in the previous dataset.
+The script generates 4 files:
+1. Zipifan dataset: kmers,following zipifan distribution, to be counted.
+2. Unique dataset: Unique kmers only.
+3. TruekmerCount:kmers count in format “kmer\tcount”.
+4. Unseen dataset: kmers that don't exist in the previous dataset.
 
-I generated 1M kmer of length 20 and 10K unseen kmers.Here is the frequency distribution for the 1M kmers
+I generated 47M kmer(1M unique kmer) of length 20 and 10K unseen kmers.Here is the frequency distribution for the 1M kmers
 ![data1000000.goldHist.png]({{ site.baseurl }}/images/data1000000.goldHist.png)
 
-## CQF Unit Test
-I used some test cases from Khmer to test CQF. The test cases cover simple insert/query items into the filter, save filter to hard disk, load from hard disk, and inserting items many times(> 65535 times). All the test cases passed except counting highly frequent items. CQF dynamically allocate bigger counters for high frequent items. However, the largest counter is 2 bytes; therefore, It can count up to 65535. If we try to count more than 65535, the counter overflows and counting stars from the beginning.
+### CQF Unit Test
+I borrowed some test cases from Khmer to test CQF. The test cases cover simple inserting/querying items into the filter, saving filter to hard disk, loading from hard disk, and inserting items many times(> 65535 times). All the test cases passed except counting highly frequent items. CQF dynamically allocate bigger counters for high frequent items. However, the largest counter is 2 bytes; therefore, It can count up to 65535. If we try to count more than 65535, the counter overflows and counting stars from the beginning.
 
-Python unit test is used to implement the [test-cases](https://github.com/shokrof/khmer/blob/DibMaster/tests/test_CQF.py)
+#### Code
+Python unit test is used to implement the [test-cases](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/test_CQF.py)
  in khmer.
-Usage: py.test tests/test_CQF.py
 
+Usage:
+~~~~
+py.test tests/test_CQF.py
+~~~~
 
-### Suggestion
+#### Suggestion
 1. qf_insert function should return false if the filter is fully loaded.
 2. Counters should have maximum values to avoid overflow. 65535 is reasonable for kmer counting application.
 
 
 
-## Load Factor Test
-[RSQF Code](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/testLoadFactor.py),[CQF Code](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/testLoadFactorCQF.py)
+### Load Factor Test
 
-I am trying to find the maximum loading factor that can achieved by cqf. I am using uniform distributed kmers dataset. I created QFCounttable by passing 8192 as input. 9152 slots are created. In Every run, I iteratively insert kmers repeated M times and record the maximum number of unique kmers that can be inserted. Values of M are 2**i-1 for i in 1:16.Result is shown in the following graph.
+I am trying to find the maximum loading factor that can achieved by cqf. I am using uniform distributed kmers dataset. I created CQF by passing 8192 as input. 9152 slots are created. In Every run, I iteratively insert kmers repeated M times and record the maximum number of unique kmers that can be inserted. Values of M are 2**i-1 for i in 1:16.Result is shown in the following graph.
 
 ![loadingCQF.png]({{ site.baseurl }}/images/loadingCQF.png)
 
+#### Code
+[CQF Code](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/testLoadFactorCQF.py)
+
+Usage:
+~~~~
+python3 testloadFactorCQF.py <dataset of uniq kmers> <SketchSize(Must be power-of-2)>  <No Repeat>
+~~~~
 
 
 
-## Size Doubling
-QF Sketches uses power-of-2 sizes. It is very efficient method since bit shifting can be used to calculate modulus operation. Also, Dividing the hash values into quotient and remaining can be done using bit masks. However, it has two disadvantages.
-1. Growing the sketches using size doubling technique is impractical for huge sketches. For example, If you want to grow 32GB sketch, you will need 64GB which may not available.
-2. Using Prime sizes avoids data clustering even when using simple bad hash functions. [ref](http://srinvis.blogspot.com.eg/2006/07/hash-table-lengths-and-prime-numbers.html)
+### Accuracy Test
+
+I am trying to compare the accuracy of Khmer implementations of cqf,bloom filter, and count-min sketch.
+
+#### Experiment 1 Quotient Filter Vs Bloom filter
+
+I am comparing Quotient Filter with Bloom Filter Test. I used Bloom filter implemented in Khmer. I could not find an implementation for Quotient Filter(RSQF), So I used CQF and unique kmers dataset. I created Bloom filter and Quotient Filter of size approximate to 524K. Then, I iteratively inserted kmers in both filters and measured the accuracy. For Accuracy, I queried the filters with new kmers and calculated the number of the false positives.
 
 
-## Merging Issue
-Mod operation is always used before adding the hash value to the sketch. Khmer uses calculate hash value mod sketch range. Since Quotient filter must use the same hash functions to be merged, Only sketches with the same range can be merged. Same range constraint is more relaxed of same sizes. Sketches with bigger sizes but smaller remaining parts can be merged as long as the haves the same number of hash-bits.
-
-From [Storage.hh](https://github.com/shokrof/khmer/blob/DibMaster/include/oxli/storage.hh): Line 438
-
-![qfadd.png]({{ site.baseurl }}/images/qfadd.png "qf")
-
-I did [experiment](https://github.com/splatlab/cqf/blob/master/main.c) to test the above theory. I tried to merge two sketches of different sizes. As expected the code fails at the merging function.
+ ![BloomVsCQF.png]({{ site.baseurl }}/images/BloomVsCQF.png)
 
 
+ As Mentioned in the paper, Quotient filter is space efficient when the accuracy is below 1/64.
+
+##### Code
+[Bloom Test](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/testSketchesAccuracy.py)
+
+Usage:
+~~~~
+python testSketchesAccuracy.py <Unique Dataset> <Unseen Data Set>
+~~~~
 
 
-## Resizing Issue
-
-
-If we need to increase the number of slots for resizing, we need to increase the q without decreasing cf.range(using the same number of hash-bits). Changing cf.range is similar to changing the hash function. So, We can increase the q and decrease remaining's size and maintain cf.range constant before and after the resizing.
-
-I found that the r is always set to 8(size +8 ). I tried to change it to lesser values(2-7), but the code fails the basic test. Therefore. I concluded we can't implement resizing technique described in cqf paper using the current cqf implementation. Unless this bug is fixed.
-
-From [Storage.hh](https://github.com/shokrof/khmer/blob/DibMaster/include/oxli/storage.hh): Line 418
-
-![QFStorageInit.png]({{site.baseurl}}/images/QFStorageInit.png)
-
-I tried to use cqf merge function to merge two equally size sketches into a bigger one, but it fails.
-
-### Suggestion
-A simpler implementation can be done using c++. SDSL library implements variable size integer arrays, Rank, and select data structures. For Kmer counting application, Cache efficiency is over optimization since it is I/O intensive application. CQF implementation will be simpler if the blocks organization idea is abandoned.
-
-## Accuracy Test
-[Script](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/runTests.sh)
-
-I am trying to compare the accuracy of Khmer implementation of both cqf and count-min sketch.
-1. I created a dataset of kmers
-2. Load the sketch using the dataset
-3. Calculate the accuracy of kmers exist in the sketch.
-4. Calculate the accuracy of kmers don’t exist in the sketch.
-
-
-
-### Experiment 1 (CQF Vs Count-min sketch):
-I did the experiment using different sketch sizes. Sketch size is an approximate number for the actual size allocated in the memory.
-
-
-I used simple accuracy measure. I calculate the absolute difference between the true count for the kmer and the observed count ([Accuracy Test Code](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/testPerfomance.py)). I drew boxplot for all the values ([Plotting Code](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/plotPerformanceBoxPlot.py)).
+#### Experiment 2 (CQF Vs Count-min sketch):
+I am comparing the accuracy of cqf and countmin sketch. I inserted kmers in Zipifan dataset into cqf and countmin sketch. Then, I queried both data-structures with kmers in zipifan dataset and unseen dataset.
+I used simple accuracy measure. I calculate the absolute difference between the true count for the kmer and the observed count. Box plot is drawn for all the differences. I repeated the experiment using different sketch sizes. Results is shown in the box plot below.
 
 ![data1000000.Exist.png]({{ site.baseurl }}/images/data1000000.Exist.png)
 
@@ -128,18 +124,75 @@ I used simple accuracy measure. I calculate the absolute difference between the 
 As Expected, The cqf has fewer errors than count-min sketch, but the cqf errors are more scattered.
 
 
-### Experiment 2 Quotient Filter Vs Bloom filter
+##### Code
+([Accuracy Test Code](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/testPerfomance.py)), ([Plotting Code](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/plotPerformanceBoxPlot.py))
 
-I am comparing Quotient Filter with Bloom Filter [Test](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/testSketchesAccuracy.py). I used Bloom filter implemented in Khmer. I could not find an implementation for Quotient Filter(RSQF), So I used CQF and Unique kmers dataset. I created Bloom filter and Quotient Filter of size approximate to 524K. Then, I iteratively inserted kmers in both filters and measured the accuracy. For Accuracy, I queried the filters with new kmers and calculated the number of the false positives.
+~~~
+parallel --gnu  -k "python3 testPerfomance.py <dataset_Prefix> {1} {2}" :::  <Sketch sizes(space seperated)>  :::  --cqf --cm > <dataset_Prefix>.result
+python3 plotPerformanceBoxPlot.py <dataset_Prefix>
+~~~
 
 
- ![BloomVsCQF.png]({{ site.baseurl }}/images/BloomVsCQF.png)
+### Merging Test
+In Merge Test, I am going to dive deep in the merging capabilities of cqf. From Theoretical view, there is some constraints on the filters that must be met before merging. Mod operation is always used before adding the hash value to the sketch. Khmer uses calculate hash value mod sketch range. Since Quotient filter must use the same hash functions to be merged, Only sketches with the same range can be merged. Same range constraint is more relaxed of same sizes. Sketches with bigger sizes but smaller remaining parts can be merged as long as the haves the same number of hash-bits.
 
- As Mentioned in the paper, Quotient filter is space efficient when the accuracy is below 1/64.
+From [Storage.hh](https://github.com/shokrof/khmer/blob/DibMaster/include/oxli/storage.hh): Line 438
 
+![qfadd.png]({{ site.baseurl }}/images/qfadd.png "qf")
+
+I did two experiments to test the above theory. First, I tried to merge two Quotient Filters with the same size into new one(also same size). CQF successfully merged the two filters. Then, I tried to merge two sketches of different sizes. As expected the code fails at the merging function.
+
+CQF can only merge filters using the same number of hashbits. Different size filters can be merged as long as they have the same number of bits; remaining parts is different in this case.
+
+#### Code
+Merging functions is not exposed to khmer library. So, I developed test cases using C linked directly to cqf library.
+[Merge Test (Same Size)](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/mergeTest_SameSize.c),
+[Merge Test (Different Size)](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/mergeTest_DifferentSize.c)
+
+
+Usage:
+~~~~
+make
+./mergeTest_SameSize
+./mergeTest_DifferentSize
+
+~~~~
+
+
+
+### Resizing Test
+
+I am testing the cqf resizing capabilities. Resizing is not implemented in the current cqf library. I am testing resizing using a workaround by merging full small cqf into empty big one.
+
+Theoretically,If we need to increase the number of slots for resizing, we need to increase the q without decreasing cf.range(using the same number of hash-bits). Changing cf.range is similar to changing the hash function. So, We can increase the q and decrease remaining's size and maintain cf.range constant before and after the resizing.
+
+I found that the r is always set to 8(size +8 ). I tried to change it to lesser values(2-7), but the code fails. I also tried to use cqf merge function to merge two equally size sketches into a bigger one, but it fails.
+
+Therefore. I concluded we can't implement resizing technique described in cqf paper using the current cqf implementation. Unless this bug is fixed.
+
+#### Code
+[Change R value test](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/mergeTest_Qbits.c) ,[Resize test](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/mergeTest_Resize.c).
+
+Usage:
+~~~~
+make
+./mergeTest_Qbits
+./mergeTest_Resize
+~~~~
+
+
+#### Suggestion
+A simpler implementation can be done using c++. SDSL library implements variable size integer arrays, Rank, and select data structures. For Kmer counting application, Cache efficiency is over optimization since it is I/O intensive application. CQF implementation will be simpler if the blocks organization idea is abandoned.
+
+
+### Size Doubling
+QF Sketches uses power-of-2 sizes. It is very efficient method since bit shifting can be used to calculate modulus operation. Also, Dividing the hash values into quotient and remaining can be done using bit masks. However, it has two disadvantages.
+1. Growing the sketches using size doubling technique is impractical for huge sketches. For example, If you want to grow 32GB sketch, you will need 64GB which may not available.
+2. Using Prime sizes avoids data clustering even when using simple bad hash functions. [ref](http://srinvis.blogspot.com.eg/2006/07/hash-table-lengths-and-prime-numbers.html)
 
 ## Assessment Summary
 ### Upsides
+1. Quotient filter is space efficient when the accuracy is below 1/64.
 
 ### Downsides
 1. When inserted kmer to fully loaded sketch the code just fail. I can’t even catch an exception.
