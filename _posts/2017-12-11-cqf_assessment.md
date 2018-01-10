@@ -33,6 +33,8 @@ All the tests below can be found on my [khmer github repository](https://github.
 ### Install & Run
 1. Clone DibMaster branch
 2. Install Khmer [guide](http://khmer.readthedocs.io/en/v2.1.2/dev/getting-started.html).
+3. Install Parallel tool(sudo apt-get install parallel).
+4. Install numpy and matplotlib(pip install numpy matplotlib).
 3. run [runTests.sh](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/runTests.sh) script to generate the test data and run all tests.
 
 ### Tests:
