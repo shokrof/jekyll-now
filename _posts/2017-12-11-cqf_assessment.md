@@ -97,9 +97,7 @@ python3 testloadFactorCQF.py <dataset of uniq kmers> <SketchSize(Must be power-o
 I am trying to compare the accuracy of Khmer implementations of cqf,bloom filter, and count-min sketch.
 
 #### Experiment 1 Quotient Filter Vs Bloom filter
-
-I am comparing Quotient Filter with Bloom Filter Test. I used Bloom filter implemented in Khmer. I could not find an implementation for Quotient Filter(RSQF), So I used CQF and unique kmers dataset. I created Bloom filter and Quotient Filter of size approximate to 524K. Then, I iteratively inserted kmers in both filters and measured the accuracy. For Accuracy, I queried the filters with new kmers and calculated the number of the false positives.
-
+ Experiment 1 compares Quotient Filter and Bloom filter. Khmer implementation of bloom filter is used, and CQF is used for the quotient filter because I couldn't find an implementation for RSQF. Bloom filter and CQF are created with size approximate to 524k. Then, Unique kmers are iteratively inserted in both filters. Accuracy is measured periodically. Accuracy measure is the number of false positives found while querying unseen kmers. 
 
  ![BloomVsCQF.png]({{ site.baseurl }}/images/BloomVsCQF.png)
 
