@@ -82,6 +82,8 @@ To find the maximum loading factor that can be achieved by CQF, a dataset with u
 
 ![loadingCQF.png]({{ site.baseurl }}/images/loadingCQF.png)
 
+Figure 2: Maximum Loading of CQF using uniform distribution.
+
 #### Code
 [CQF Code](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/testLoadFactorCQF.py)
 
@@ -97,10 +99,11 @@ python3 testloadFactorCQF.py <dataset of uniq kmers> <SketchSize(Must be power-o
 I am trying to compare the accuracy of Khmer implementations of cqf,bloom filter, and count-min sketch.
 
 #### Experiment 1 Quotient Filter Vs Bloom filter
- Experiment 1 compares Quotient Filter and Bloom filter. Khmer implementation of bloom filter is used, and CQF is used for the quotient filter because I couldn't find an implementation for RSQF. Bloom filter and CQF are created with size approximate to 524k. Then, Unique kmers are iteratively inserted in both filters. Accuracy is measured periodically. Accuracy measure is the number of false positives found while querying unseen kmers. 
+ Experiment 1 compares Quotient Filter and Bloom filter. Khmer implementation of bloom filter is used, and CQF is used for the quotient filter because I couldn't find an implementation for RSQF. Bloom filter and CQF are created with size approximate to 524k. Then, Unique kmers are iteratively inserted in both filters. Accuracy is measured periodically. Accuracy measure is the number of false positives found while querying unseen kmers.
 
  ![BloomVsCQF.png]({{ site.baseurl }}/images/BloomVsCQF.png)
 
+Figure 3: Accuracy Comparison: Bloom filter Vs CQF
 
  As Mentioned in the paper, Quotient filter is space efficient when the accuracy is below 1/64.
 
@@ -114,12 +117,17 @@ python testSketchesAccuracy.py <Unique Dataset> <Unseen Data Set>
 
 
 #### Experiment 2 (CQF Vs Count-min sketch):
-I am comparing the accuracy of cqf and countmin sketch. I inserted kmers in Zipifan dataset into cqf and countmin sketch. Then, I queried both data-structures with kmers in zipifan dataset and unseen dataset.
-I used simple accuracy measure. I calculate the absolute difference between the true count for the kmer and the observed count. Box plot is drawn for all the differences. I repeated the experiment using different sketch sizes. Results is shown in the box plot below.
+Experiment 2 compares the accuracy of cqf and countmin sketch. Kmers form Zipifan dataset is inserted into cqf and countmin sketch. Then Kmers from the same dataset and unseen dataset is queried. Box plot is drawn for the absolute difference of the true count and the observed count. The experiment is repeated using different sketch sizes. Results is shown in the box plot below.
 
 ![data1000000.Exist.png]({{ site.baseurl }}/images/data1000000.Exist.png)
 
+Figure 4: Accuracy Comparison(same dataset used): Countmin vs CQF
+
 ![data1000000.NonExist.png]({{ site.baseurl }}/images/data1000000.NonExist.png)
+
+Figure 5: Accuracy Comparison(unseen dataset used): Countmin vs CQF
+
+
 
 As Expected, The cqf has fewer errors than count-min sketch, but the cqf errors are more scattered.
 
@@ -136,9 +144,9 @@ python3 plotPerformanceBoxPlot.py <dataset_Prefix>
 ### Merging Test
 In Merge Test, I am going to dive deep in the merging capabilities of cqf. From Theoretical view, there is some constraints on the filters that must be met before merging. Mod operation is always used before adding the hash value to the sketch. Khmer uses calculate hash value mod sketch range. Since Quotient filter must use the same hash functions to be merged, Only filters with the same range can be merged. Same range constraint is more relaxed of same sizes. Filters with bigger sizes but smaller remaining parts can be merged as long as the haves the same number of hash-bits.
 
-From [Storage.hh](https://github.com/shokrof/khmer/blob/DibMaster/include/oxli/storage.hh): Line 438
-
 ![qfadd.png]({{ site.baseurl }}/images/qfadd.png "qf")
+
+Figure 6 [Storage.hh](https://github.com/shokrof/khmer/blob/DibMaster/include/oxli/storage.hh): Line 438
 
 I did two experiments to test the above theory. First, I tried to merge two Quotient Filters with the same size into new one(also same size). CQF successfully merged the two filters. Then, I tried to merge two filters of different sizes. As expected the code fails at the merging function.
 
@@ -190,14 +198,11 @@ CQF uses power-of-2 sizes. It is very efficient method since bit shifting can be
 1. Growing the CQF using size doubling technique is impractical for huge filter. For example, If you want to grow 32GB sketch, you will need 64GB which may not available.
 2. Using Prime sizes avoids data clustering even when using simple bad hash functions. [ref](http://srinvis.blogspot.com.eg/2006/07/hash-table-lengths-and-prime-numbers.html)
 
-## Assessment Summary
-### Upsides
+## Assessment Remarks
 1. Quotient filter is space efficient when the accuracy is below 1/64.
-
-### Downsides
-1. When inserted kmer to fully loaded sketch the code just fail. I can’t even catch an exception.
-2. Sketch uses variable length counter for each kmer with max 2 bytes. If the kmer count exceeds 65535. The counter overflow and the value resets([CQF Unit Test](#cqf-unit-test))
-3. Sketch size can only be of the power-of-two. If you want to increase the sketch size you need to double it ([See Size Doubling](#size-doubling)).
-4. CQF need to have the same number of hash-bits to be merged([See Merging Issue](#merging-issue)).  
-5. Resizing is not implemented in the cqf library, and It can’t be implemented using the current cqf library.([See resizing issue](#resizing-issue))
-6. CQF produces larger counting errors, but less often than the count-min sketch([See accuracy test](#accuracy-test)).
+2. When inserted kmer to fully loaded sketch the code just fail. I can’t even catch an exception.
+3. Sketch uses variable length counter for each kmer with max 2 bytes. If the kmer count exceeds 65535. The counter overflow and the value resets([CQF Unit Test](#cqf-unit-test))
+4. Sketch size can only be of the power-of-two. If you want to increase the sketch size you need to double it ([See Size Doubling](#size-doubling)).
+5. CQF need to have the same number of hash-bits to be merged([See Merging Issue](#merging-issue)).  
+6. Resizing is not implemented in the cqf library, and It can’t be implemented using the current cqf library.([See resizing issue](#resizing-issue))
+7. CQF produces larger counting errors, but less often than the count-min sketch([See accuracy test](#accuracy-test)).
