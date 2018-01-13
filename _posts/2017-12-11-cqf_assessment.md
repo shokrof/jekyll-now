@@ -22,11 +22,12 @@ Insertion Algorithm uses a variant of linear probing to resolve collisions. If w
 
 CQF uses the same insertion strategy as RSQF; however, It allows counting the number of instances inserted. If the item inserted more than once, enough slots immediately following that element’s remainder are used to encode for its count.
 
-## Counting Quotient Filter Advantages
-1. CQF has better data locality than bloom filter. Items are saved in one place. Therefore, CQF are efficient when stored in main memory since it produces fewer cache misses than bloom filter. CQF also perform well when stored on SSD disk.
-2. CQF can be merged easily, like merging sorted lists. Bloom filters can be merged easily as well by using OR operation but only if they have the same size. In case of CQF, we can merge filters of different sizes.
-3. CQF resizing is possible in streaming fashion.
-4. CQF uses variable size counters. So, It is suitable for counting data following ([zipifan distribution](https://en.wikipedia.org/wiki/Zipf%27s_law)) where most the items occur one or two times.
+## Quotient Family Advantages
+1. QF has better data locality than bloom filter. Items are saved in one place. Therefore, QF are efficient when stored in main memory since it produces fewer cache misses than bloom filter. QF also perform well when stored on SSD disk.
+2. QF can be merged easily, like merging sorted lists. Bloom filters can be merged easily as well by using OR operation but only if they have the same size. In case of QF, we can merge filters of different sizes.
+3. QF resizing is possible in streaming fashion.
+4. RSQF advantage
+5. CQF uses variable size counters. So, It is suitable for counting data following ([zipifan distribution](https://en.wikipedia.org/wiki/Zipf%27s_law)) where most the items occur one or two times.
 
 
 ## CQF Assessment
@@ -34,7 +35,7 @@ All the tests below can be found on my [khmer github repository](https://github.
 
 ### Install & Run
 1. Clone DibMaster branch
-2. Install Khmer [guide](http://khmer.readthedocs.io/en/v2.1.2/dev/getting-started.html).
+2. Install [Khmer](http://khmer.readthedocs.io/en/v2.1.2/dev/getting-started.html).
 3. Install Parallel tool(sudo apt-get install parallel).
 4. Install numpy and matplotlib(pip install numpy matplotlib).
 5. cd testsCQF/ && run [runTests.sh](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/runTests.sh) script to generate the test data and run all tests.
@@ -49,9 +50,9 @@ All the tests below can be found on my [khmer github repository](https://github.
 
 ### Dataset Description
 
-Simulated datasets were [designed](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/generateSeq.py) for testing CQF and comparing it with bloom filter and countmin sketch.
+Simulated datasets  of 20 bp kmers were [designed](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/generateSeq.py) for testing CQF and comparing it with bloom filter and countmin sketch.
 Simulated datasets include:
-1. Zipifan dataset: 47M total kmers (1M unique kmers) of length 20 following [zipifan distribution](https://en.wikipedia.org/wiki/Zipf%27s_law) (Figure 2)
+1. Zipifan dataset: 47M total kmers (1M unique kmers) following [zipifan distribution](https://en.wikipedia.org/wiki/Zipf%27s_law) (Figure 2)
 2. Unique dataset: 1M Unique kmers only.
 3. TruekmerCount: kmers count in format “kmer\tcount”
 4. Unseen dataset: 10K kmers that don't exist in the previous dataset.
@@ -62,20 +63,15 @@ Figure 2: the frequency distribution of the Zipifan dataset
 
 
 ### CQF Unit Test
-I borrowed some test cases from Khmer to test CQF. The test cases cover simple inserting/querying items into the filter, saving filter to hard disk, loading from hard disk, and inserting items many times(> 65535 times). All the test cases passed except counting highly frequent items. CQF dynamically allocate bigger counters for high frequent items. However, the largest counter is 2 bytes; therefore, It can count up to 65535. If we try to count more than 65535, the counter overflows and counting stars from the beginning.
+I borrowed some test cases from Khmer to test CQF. The test cases cover simple inserting/querying items into the filter, saving filter to hard disk, and loading from hard disk. All the test cases passed except inserting highly frequent items(>65535). CQF dynamically allocate bigger counters for high frequent items. However, the largest counter is 2 bytes; therefore, It can count up to 65535. If we try to count more than 65535, the counter overflows and restarts counting. I suggest to limit the maximum value for counters.
 
-#### Code
-Python unit test is used to implement the [test-cases](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/test_CQF.py)
- in khmer.
 
-Usage:
+#### [Code](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/test_CQF.py) Usage:
 ~~~~
 py.test tests/test_CQF.py
 ~~~~
 
-#### Suggestion
-1. qf_insert function should return false if the filter is fully loaded.
-2. Counters should have maximum values to avoid overflow. 65535 is reasonable for kmer counting application.
+
 
 
 
