@@ -77,7 +77,7 @@ py.test tests/test_CQF.py
 
 ### Load Factor Test
 
-To find the maximum loading factor that can be achieved by CQF, the unique dataset of kmer was inserted M times(Values of M are 2^i-1 for i in 1:16). The maximum number of unique kmers that can be inserted is recorded. During insertions, kmers that might have collisions with the pre-inserted ones were avoided to ensure the accurate calculation of load factor. CQF was created by passing 2^13 slots as input. This filter should have 8192 slots but actually the current software creates 9152 slots. Exploring the code showed that the constructor of the filter add 10*sqrt(Number Slots). Authors [claim](https://github.com/splatlab/cqf/issues/4) that the extra slots are added to handle overflow. Result is shown in the following graph.
+To find the maximum loading factor that can be achieved by CQF, the unique dataset of kmer was inserted M times(Values of M are 2^i-1 for i in 1:16). The maximum number of unique kmers that can be inserted is recorded. During insertions, kmers that might have collisions with the pre-inserted ones were avoided to ensure the accurate calculation of load factor. CQF was created by passing 2^13 slots as input. This filter should have 8192 slots but actually the current software creates 9152 slots. Exploring the code showed that the constructor of the filter add 10*sqrt(Number Slots). Authors [claim](https://github.com/splatlab/cqf/issues/4) that the extra slots are added to handle the overflow in the last block. Result is shown in the following graph.
 
 ![loadingCQF1-10.png]({{ site.baseurl }}/images/loadingCQF1-10.png)
 Figure 3: Maximum Loading of CQF using uniform distribution.
@@ -85,9 +85,9 @@ Figure 3: Maximum Loading of CQF using uniform distribution.
 ![loadingCQF.png]({{ site.baseurl }}/images/loadingCQF.png)
 Figure 4: Maximum Loading of CQF using uniform distribution.
 
-CQF successfully inserted 9097 unique kmers(M=1) into 9152 slots which leads to 99% load factor. With 1 fold increase in kmers repetition(M=2), The number of unique kmers to be inserted is decreased by 49%. The number of unique kmers also decreased to 33% when M=3. The decrease is due to cqf uses slots to encode counters which consume the filter. In Figure 4, We can also see there is a significant decrease at M=256(Log2(M)=8). CQF increase the counters width to use 2 slots to handle the big counts.
-
-In addition to the big decreases in Figures 3-4, We can notice that there is gradual decrease in maximum number of inserted kmers with the increase of M. The encoding scheme of the counters is the reason behind this gradual decrease.
+CQF successfully inserted 9097 unique kmers(M=1) into the 9152 slots which leads to 99% load factor. With 1 fold increase in kmers repetition(M=2), The maximum number of unique kmers that can be inserted decreased to 49%. Another sharp reduction to 33% happened with another fold increase in kmers repetition(M=3). The number of unique kmers also decreased to 33% when M=3. The decrease is due to CQF using slots to encode for counters. The decrease of the maximum allowed unique kmers continues gradually until the highest tested repetition (log2(M)=16) (Figure 3 and Figure 4). Two reasons might explain this continuous reduction:
+a) CQF increases the counters’ size to use extra slots to handle the big counts which could explain the big reduction seen at log2(M)=8  
+b) With gradual increase of M, it is more likely to be bigger than the remaining value (r) encoding for the kmer. CQF has a special encoding scheme that add extra slot to tag these counters.  
 
 
 #### Code
