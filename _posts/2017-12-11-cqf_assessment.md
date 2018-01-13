@@ -77,11 +77,18 @@ py.test tests/test_CQF.py
 
 ### Load Factor Test
 
-To find the maximum loading factor that can be achieved by CQF, a dataset with uniformly distributed kmer counts. CQF was created by passing 8192 as input. 9152 slots are created. In Every run, I iteratively insert kmers repeated M times and record the maximum number of unique kmers that can be inserted. Values of M are 2**i-1 for i in 1:16.Result is shown in the following graph.
+To find the maximum loading factor that can be achieved by CQF, the unique dataset of kmer was inserted M times(Values of M are 2**i-1 for i in 1:16). The maximum number of unique kmers that can be inserted is recorded. During insertions, kmers that might have collisions with the pre-inserted one were avoided to ensure the maximum loading factor. CQF was created by passing 2^13 as input. This filter should have 8192 slots but actually the current software creates 9152 slots. Exploring the code showed that the constructor of the filter add 10*sqrt(NoSlots). Authors [claim](https://github.com/splatlab/cqf/issues/4) that the extra slots is added to handle overflow. Result is shown in the following graph.
+
+![loadingCQF1-10.png]({{ site.baseurl }}/images/loadingCQF1-10.png)
+Figure 3: Maximum Loading of CQF using uniform distribution.
 
 ![loadingCQF.png]({{ site.baseurl }}/images/loadingCQF.png)
+Figure 4: Maximum Loading of CQF using uniform distribution.
 
-Figure 3: Maximum Loading of CQF using uniform distribution.
+CQF successfully inserted 9097 unique kmers(M=1) into 9152 slots which leads to 99% load factor. With 1 fold increase in kmers repetition(M=2), The number of unique kmers to be inserted is decreased by 49%. The number of unique kmers also decreased to 33% when M=3. The decrease is due to cqf uses slots to encode counters which consume the filter. In Figure 4, We can also see there is a significant decrease at M=256(Log2(M)=8). CQF increase the counters width to use 2 slots to handle the big counts.
+
+In addition to the big decreases in Figures 3-4, We can notice that there is gradual decrease in maximum number of inserted kmers with the increase of M. The encoding scheme of the counters is the reason behind this gradual decrease. 
+
 
 #### Code
 [CQF Code](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/testLoadFactorCQF.py)
@@ -102,7 +109,7 @@ I am trying to compare the accuracy of Khmer implementations of cqf,bloom filter
 
  ![BloomVsCQF.png]({{ site.baseurl }}/images/BloomVsCQF.png)
 
-Figure 4: Accuracy Comparison: Bloom filter Vs CQF
+Figure 5: Accuracy Comparison: Bloom filter Vs CQF
 
  As Mentioned in the paper, Quotient filter is space efficient when the accuracy is below 1/64.
 
@@ -120,11 +127,11 @@ Experiment 2 compares the accuracy of cqf and countmin sketch. Kmers form Zipifa
 
 ![data1000000.Exist.png]({{ site.baseurl }}/images/data1000000.Exist.png)
 
-Figure 5: Accuracy Comparison(same dataset used): Countmin vs CQF
+Figure 6: Accuracy Comparison(same dataset used): Countmin vs CQF
 
 ![data1000000.NonExist.png]({{ site.baseurl }}/images/data1000000.NonExist.png)
 
-Figure 6: Accuracy Comparison(unseen dataset used): Countmin vs CQF
+Figure 7: Accuracy Comparison(unseen dataset used): Countmin vs CQF
 
 
 
@@ -145,7 +152,7 @@ In Merge Test, I am going to dive deep in the merging capabilities of cqf. From 
 
 ![qfadd.png]({{ site.baseurl }}/images/qfadd.png "qf")
 
-Figure 7 [Storage.hh](https://github.com/shokrof/khmer/blob/DibMaster/include/oxli/storage.hh): Line 438
+Figure 8 [Storage.hh](https://github.com/shokrof/khmer/blob/DibMaster/include/oxli/storage.hh): Line 438
 
 I did two experiments to test the above theory. First, I tried to merge two Quotient Filters with the same size into new one(also same size). CQF successfully merged the two filters. Then, I tried to merge two filters of different sizes. As expected the code fails at the merging function.
 
