@@ -10,6 +10,9 @@ Quotient filter (QF) is an AMQ that was first coined by [Michael A. Bender et al
 
 ## Quotient Filter
 ![QuotientFilter.jpg]({{ site.baseurl }}/images/QuotientFilter.jpg "qf")
+
+Figure 1: Quotient Filter
+
 QF, like Bloom filter, doesn't produce false negative errors. In other words, If the item doesn't exist in QF, we are certain that the item doesn't exist in the original set. However, QF can produce false positive errors. For items having the same hash values, QF mistakenly report all of them exists if only one exists in the filter. The above figure describes the insertion algorithm in the QF. First, the filter splits the hash-bits into two components: quotient and remaining parts. Quotient Part is used to determine the target slot. The remaining is inserted into the target slot.
 
 Insertion Algorithm uses a variant of linear probing to resolve collisions. If we are trying to insert item to occupied slots, linear probing uses the next vacant slot. Linear probing is very simple, and have good data locality, but It works well only when the load factor is low([reference](https://en.wikipedia.org/wiki/Linear_probing#Analysis)). In Space tight conditions, long contagious occupied slots(runs) decreases the performance of both inserting and query items. QF overcomes linear probing shortcoming by two changes. First, it keeps items in the run in sorted order. Second, it uses meta data to determine the start and the end of the runs. QF uses 3 metadata bits per slot while RSQF only uses 2.125 metadata bits per slot yet it is has better data locality.
@@ -48,14 +51,14 @@ All the tests below can be found on my [khmer github repository](https://github.
 
 Simulated datasets were [designed](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/generateSeq.py) for testing CQF and comparing it with bloom filter and countmin sketch.
 Simulated datasets include:
-1. Zipifan dataset: 47M total kmers (1M unique kmers) of length 20 following [zipifan distribution](https://en.wikipedia.org/wiki/Zipf%27s_law) (Figure 1)
+1. Zipifan dataset: 47M total kmers (1M unique kmers) of length 20 following [zipifan distribution](https://en.wikipedia.org/wiki/Zipf%27s_law) (Figure 2)
 2. Unique dataset: 1M Unique kmers only.
 3. TruekmerCount: kmers count in format “kmer\tcount”
 4. Unseen dataset: 10K kmers that don't exist in the previous dataset.
 
 ![data1000000.goldHist.png]({{ site.baseurl }}/images/data1000000.goldHist.png)
 
-Figure 1: the frequency distribution of the Zipifan dataset
+Figure 2: the frequency distribution of the Zipifan dataset
 
 
 ### CQF Unit Test
@@ -82,7 +85,7 @@ To find the maximum loading factor that can be achieved by CQF, a dataset with u
 
 ![loadingCQF.png]({{ site.baseurl }}/images/loadingCQF.png)
 
-Figure 2: Maximum Loading of CQF using uniform distribution.
+Figure 3: Maximum Loading of CQF using uniform distribution.
 
 #### Code
 [CQF Code](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/testLoadFactorCQF.py)
@@ -103,7 +106,7 @@ I am trying to compare the accuracy of Khmer implementations of cqf,bloom filter
 
  ![BloomVsCQF.png]({{ site.baseurl }}/images/BloomVsCQF.png)
 
-Figure 3: Accuracy Comparison: Bloom filter Vs CQF
+Figure 4: Accuracy Comparison: Bloom filter Vs CQF
 
  As Mentioned in the paper, Quotient filter is space efficient when the accuracy is below 1/64.
 
@@ -121,11 +124,11 @@ Experiment 2 compares the accuracy of cqf and countmin sketch. Kmers form Zipifa
 
 ![data1000000.Exist.png]({{ site.baseurl }}/images/data1000000.Exist.png)
 
-Figure 4: Accuracy Comparison(same dataset used): Countmin vs CQF
+Figure 5: Accuracy Comparison(same dataset used): Countmin vs CQF
 
 ![data1000000.NonExist.png]({{ site.baseurl }}/images/data1000000.NonExist.png)
 
-Figure 5: Accuracy Comparison(unseen dataset used): Countmin vs CQF
+Figure 6: Accuracy Comparison(unseen dataset used): Countmin vs CQF
 
 
 
@@ -146,7 +149,7 @@ In Merge Test, I am going to dive deep in the merging capabilities of cqf. From 
 
 ![qfadd.png]({{ site.baseurl }}/images/qfadd.png "qf")
 
-Figure 6 [Storage.hh](https://github.com/shokrof/khmer/blob/DibMaster/include/oxli/storage.hh): Line 438
+Figure 7 [Storage.hh](https://github.com/shokrof/khmer/blob/DibMaster/include/oxli/storage.hh): Line 438
 
 I did two experiments to test the above theory. First, I tried to merge two Quotient Filters with the same size into new one(also same size). CQF successfully merged the two filters. Then, I tried to merge two filters of different sizes. As expected the code fails at the merging function.
 
@@ -190,7 +193,8 @@ make
 
 
 #### Suggestion
-A simpler implementation can be done using c++. SDSL library implements variable size integer arrays, Rank, and select data structures. For Kmer counting application, Cache efficiency is over optimization since it is I/O intensive application. CQF implementation will be simpler if the blocks organization idea is abandoned.
+CQF assign a byte array for the slots. It is better to uses variable size integer array to change the remaining size easily. SDSL library implements variable size integer arrays, Rank, and select data structures.
+Also, Cache efficiency is over optimization in Kmer counting applications since it is I/O intensive application. CQF implementation will be simpler if the blocks organization idea is abandoned.
 
 
 ### Size Doubling
