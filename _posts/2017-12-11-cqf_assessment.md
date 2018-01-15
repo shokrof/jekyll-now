@@ -63,6 +63,16 @@ Simulated datasets include:
 
 Figure 2: the frequency distribution of the Zipifan dataset
 
+### CQF Construction Test
+I am testing the construction of cqf. CQF construction takes two values: number of slots(2^q), and number of hash bits(q+r). CQF [usage example](https://github.com/splatlab/cqf/blob/master/main.c) is used as template for testing. CQF example takes q value as input from user while r value is hard-coded to 8. CQF succeeds to construct filters using different values of q. However, Changing r value from 8 to any other value the code fails.  
+
+CQF current software can only construct filter whose r=8. After diving in the code, I found that the number of bits per slot is set at the compilation time. Consequently, CQF current software limits the remaining part size to number decided at the compilation time. This bug not only affects the flexibility of the software. but it also affects the merging and resizing feature, See [merging and resizing test](#merging-and-possible-resizing-test).
+
+### Usage [Code](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/cqfConstruction.c):
+~~~~
+./cqfConstruction
+~~~~
+
 
 ### CQF Unit Test
 I borrowed some test cases from Khmer to test CQF. The test cases cover simple inserting/querying items into the filter, saving filter to hard disk, and loading from hard disk. All the test cases passed except inserting highly frequent items(>65535). CQF dynamically allocate bigger counters for high frequent items. However, the largest counter is 2 bytes; therefore, It can count up to 65535. If we try to count more than 65535, the counter overflows and restarts counting. I suggest to limit the maximum value for counters.
@@ -87,7 +97,10 @@ Figure 3: Maximum Loading of CQF using uniform distribution.
 ![loadingCQF.png]({{ site.baseurl }}/images/loadingCQF.png)
 Figure 4: Maximum Loading of CQF using uniform distribution(x-axis uses log scale).
 
-CQF successfully inserted 9097 unique kmers(M=1) into the 9152 slots which leads to 99% load factor. With 1 fold increase in kmers repetition(M=2), The maximum number of unique kmers that can be inserted decreased to 49%. Another sharp reduction to 33% happened with another fold increase in kmers repetition(M=3). The number of unique kmers also decreased to 33% when M=3. The decrease is due to CQF using slots to encode for counters. The decrease of the maximum allowed unique kmers continues gradually until the highest tested repetition (log2(M)=16) (Figure 3 and Figure 4). Two reasons might explain this continuous reduction:
+CQF successfully inserted 9097 unique kmers(M=1) into the 9152 slots which leads to 99% load factor. With 1 fold increase in kmers repetition(M=2), The maximum number of unique kmers that can be inserted decreased to 49%. Another sharp reduction to 33% happened with another fold increase in kmers repetition(M=3). The number of unique kmers also decreased to 33% when M=3. The decrease is due to CQF using slots to encode for counters. The decrease of the maximum allowed unique kmers continues gradually until the highest tested repetition (log2(M)=16) (Figure 3 and Figure 4).
+
+ Two reasons might explain this continuous reduction:
+
 a) CQF increases the counters’ size to use extra slots to handle the big counts which could explain the big reduction seen at log2(M)=8  
 b) With gradual increase of M, it is more likely to be bigger than the remaining value (r) encoding for the kmer. CQF has a special encoding scheme that add extra slot to tag these counters.  
 
@@ -110,9 +123,8 @@ I am trying to compare the accuracy of CQF, Bloom filter and countmin sketch wra
 
 Figure 5: Accuracy Comparison: Bloom filter Vs CQF
 
+CQF's false positive grows slowly and steadily until the filter is completely filled. FPR values dont differ too much between empty and full filters. On the other hand, Bloom filter has lower FPR when the filter is near empty and half filled. After Saturation, FPR grows exponentially. Kmers can be further inserted into saturated bloom filter at the expense of FPR.  
 
-
- As Mentioned in the paper, Quotient filter is space efficient when the accuracy is below 1/64.
 
 ##### [Code](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/testSketchesAccuracy.py) Usage
 
@@ -175,7 +187,7 @@ CQF uses power-of-2 sizes. It is very efficient method since bit shifting can be
 2. Using Prime sizes avoids data clustering even when using simple bad hash functions. [ref](http://srinvis.blogspot.com.eg/2006/07/hash-table-lengths-and-prime-numbers.html)
 
 ## Assessment Remarks
-1. Quotient filter is space efficient when the accuracy is below 1/64.
+1. CQF has lower false positive rate than bloom filter when filters are highly loaded, see [Accuracy Test](#accuracy-test).
 2. When inserted kmer to fully loaded sketch the code just fail. I can’t even catch an exception.
 3. Sketch uses variable length counter for each kmer with max 2 bytes. If the kmer count exceeds 65535. The counter overflow and the value resets([CQF Unit Test](#cqf-unit-test))
 4. Sketch size can only be of the power-of-two. If you want to increase the sketch size you need to double it ([See Size Doubling](#size-doubling)).
