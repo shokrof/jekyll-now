@@ -15,10 +15,12 @@ Figure 1: Quotient Filter
 
 QF, like Bloom filter, doesn't produce false negative errors. In other words, If the item doesn't exist in QF, we are certain that the item doesn't exist in the original set. However, QF can produce false positive errors. For items having the same hash values, QF mistakenly report all of them exists if only one exists in the filter. The above figure describes the insertion algorithm in the QF. First, the filter splits the hash-bits into two components: quotient and remaining parts. Quotient Part is used to determine the target slot. The remaining is inserted into the target slot.
 
-Insertion Algorithm uses a variant of linear probing to resolve collisions. If we are trying to insert item to occupied slots, linear probing uses the next vacant slot. Linear probing is very simple, and have good data locality, but It works well only when the load factor is low([reference](https://en.wikipedia.org/wiki/Linear_probing#Analysis)). In Space tight conditions, long contagious occupied slots(runs) decreases the performance of both inserting and query items. QF overcomes linear probing shortcoming by two changes. First, it keeps items in the run in sorted order. Second, it uses meta data to determine the start and the end of the runs. QF uses 3 metadata bits per slot while RSQF only uses 2.125 metadata bits per slot yet it is has better data locality.
+Insertion Algorithm uses a variant of linear probing to resolve collisions. If we are trying to insert item to occupied slots, linear probing uses the next vacant slot. Linear probing is very simple, and have good data locality, but It works well only when the load factor is low([reference](https://en.wikipedia.org/wiki/Linear_probing#Analysis)). In Space tight conditions, long contagious occupied slots(runs) decreases the performance of both inserting and query items. QF overcomes linear probing shortcoming by two changes. First, it keeps items in the run in sorted order. Second, it uses meta data to determine the start and the end of the runs. QF uses 3 metadata bits per slot.
 
 
 ## Counting Quotient Filter
+
+[Prashant Pandey et al](https://dl.acm.org/citation.cfm?id=3035963) enhanced Quotient Filter idea. they developed two new filters Rank and Select Quotient Filter(RSQF) and Counting Quotient Filter(CQF). RSQF differs from QF into two points. First, RSQF uses different metadata scheme than QF. Instead of 3 bits per slot, RSQF adds only 2.125 bits per slot. RSQF also uses rank and select methods to speed up the search for the runs. RSQF works efficiently even high loaded filters(<95%); while, QF only works well when the load factor is less than 70%. Second, RSQF splits the filter into blocks to store the metadata close to their slots. Therfore, RSQF has better data locality than QF.
 
 CQF uses the same insertion strategy as RSQF; however, It allows counting the number of instances inserted. If the item inserted more than once, enough slots immediately following that element’s remainder are used to encode for its count.
 
@@ -26,7 +28,7 @@ CQF uses the same insertion strategy as RSQF; however, It allows counting the nu
 1. QF has better data locality than bloom filter. Items are saved in one place. Therefore, QF are efficient when stored in main memory since it produces fewer cache misses than bloom filter. QF also perform well when stored on SSD disk.
 2. QF can be merged easily, like merging sorted lists. Bloom filters can be merged easily as well by using OR operation but only if they have the same size. In case of QF, we can merge filters of different sizes.
 3. QF resizing is possible in streaming fashion.
-4. RSQF advantage
+4. RSQF uses less metadata thanQF, and it performs well when the filter is filled up to 95% of it's capacity.
 5. CQF uses variable size counters. So, It is suitable for counting data following ([zipifan distribution](https://en.wikipedia.org/wiki/Zipf%27s_law)) where most the items occur one or two times.
 
 
