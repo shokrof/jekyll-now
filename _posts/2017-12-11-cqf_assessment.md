@@ -48,6 +48,7 @@ All the tests below can be found on my [khmer github repository](https://github.
 3. [Load factor Test](#load-factor-test)
 4. [Accuracy Test](#accuracy-test)
 5. [Merging & possible resizing test](#merging-and-possible-resizing-test)
+6. [Size Doubling](#size-doubling)
 
 
 ### Dataset Description
