@@ -5,7 +5,7 @@ published: true
 ---
 **Authors:** Moustafa Shokrof<sup>1</sup> and Tamer A Mansour<sup>2</sup>
 
-1. Nile University
+1. Center of Information Science, Nile University
 2. Department of Population Health and Reproduction, University of California, Davis, California, USA.
 
 [Approximate membership query (AMQ)](http://www.cs.cmu.edu/~lblum/flac/Presentations/Szabo-Wexler_ApproximateSetMembership.pdf) data structures provide approximate representation for data using smaller amount of memory compared to the real data size. As the name suggests, AMQ answers if a particular element exists or not in a given dataset but with possible false positive errors. Counting variants of AMQs return how many times the element was seen in the set with the same one side error that may overestimate the count of the query.
@@ -76,16 +76,6 @@ CQF current software can only construct filter whose r=8. After diving in the co
 ### CQF Unit Test
 I borrowed some test cases from Khmer to test CQF. The test cases cover simple inserting/querying items into the filter, saving filter to hard disk, and loading from hard disk. All the test cases passed except inserting highly frequent items (>65535). CQF dynamically allocate bigger counters for high frequent items. However, the largest counter is 2 bytes; therefore, It can count up to 65535. If we try to count more than 65535, the counter overflows and restarts counting. According to the definition of the variable counter in CQF, it should be able to expand but at least it should maintain the maximum value and report to the user.
 
-
-#### [Code](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/test_CQF.py) Usage:
-~~~~
-py.test tests/test_CQF.py
-~~~~
-
-
-
-
-
 ### Load Factor Test
 To find the maximum loading factor that can be achieved by CQF, a filter with known capacity was created then k-mers from the unique dataset were inserted M times (Values of M are 2^i-1 for i in 1:16) until the filter fails. During insertions and to ensure accurate calculation of the load factor, k-mers that might have collisions with the pre-inserted items were avoided. The load factor can be calculated by dividing the number of k-mers inserted by the capacity of the filter. Our test CQF was created by passing 2^13 slots as an input. This filter should have 8192 slots but actually the current software created 9152 slots. Exploring the code showed that the constructor of the filter add 10*sqrt(Number of Slots). Authors [explain](https://github.com/splatlab/cqf/issues/4) that the extra slots are added to handle the overflow in the last block. The maximum numbers of unique k-mers that can be inserted were recorded (figure 3 and figure 4).
 ![loadingCQF1-10.png]({{ site.baseurl }}/images/loadingCQF1-10.png)
@@ -96,14 +86,6 @@ CQF successfully inserted 9097 unique k-mers(M=1) into the 9152 slots which lead
 1. CQF increases the counters‚Äô size to use extra slots to handle the big counts which could explain the big reduction seen at log2(M)=8  
 2. With gradual increase of M value, it is more likely to be bigger than the remaining value (r) encoding for the k-mer. CQF has a special encoding scheme that add extra slot to tag these counters.  
 
-
-#### [Code](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/testLoadFactorCQF.py) Usage
-~~~~
-python3 testloadFactorCQF.py <dataset of uniq kmers> <SketchSize(Must be power-of-2)>  <No Repeat>
-~~~~
-
-
-
 ### Accuracy Test
 
 I am trying to compare the accuracy of CQF, Bloom filter and count-min sketch wrapped in Khmer.
@@ -113,13 +95,6 @@ I am trying to compare the accuracy of CQF, Bloom filter and count-min sketch wr
 Figure 5: Accuracy Comparison: Bloom filter Vs CQF
 CQF's false positive grows slowly and steadily until the filter is completely filled. FPR values don't differ too much between empty and full filters. On the other hand, Bloom filter has lower FPR when the filter is near empty and half filled. After Saturation, FPR grows exponentially. K-mers can be further inserted into saturated bloom filter at the expense of higher FPRs.  
 
-##### [Code](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/testSketchesAccuracy.py) Usage
-
-~~~~
-python testSketchesAccuracy.py <Unique Dataset> <Unseen Data Set>
-~~~~
-
-
 #### Experiment 2 (CQF Vs Count-min sketch):
 Experiment 2 compares the accuracy of CQF and count-min sketch. Six instances of each structure were created to cover a range of different sizes (8M-268M). Same numbers of k-mers from the Zipifan dataset were inserted into all data structures. Box plots are drawn for the differences between the true and observed counts of k-mer queries using k-mers from Zipifan (Figure 6) and unseen datasets (Figure 7).
 ![data1000000.Exist.png]({{ site.baseurl }}/images/data1000000.Exist.png)
@@ -128,38 +103,10 @@ Figure 6: Accuracy Comparison using the Zipifan dataset.
 Figure 7: Accuracy Comparison using the unseen dataset.
 The CQF has fewer but more scattered error compared to the count-min sketch.
 
-##### Code Usage:
-([Accuracy Test Code](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/testPerfomance.py)), ([Plotting Code](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/plotPerformanceBoxPlot.py))
-~~~
-parallel --gnu  -k "python3 testPerfomance.py <dataset_Prefix> {1} {2}" :::  <Sketch sizes(space seperated)>  :::  --cqf --cm > <dataset_Prefix>.result
-python3 plotPerformanceBoxPlot.py <dataset_Prefix>
-~~~
-
-
 ### Merging and possible resizing test
 Quotient filters can be merged if they have been constructed using the same total number of hash bits. With the current implementation of CQF, merging two CQF into a new one was successful  as long as all of them have the same size.
 
-
-[Code](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/mergeTest_SameSize.c) Usage:
-
-~~~~
-make
-./mergeTest_SameSize
-~~~~
-
-
-
-
 Different QFs might use the same total number of hash bits but have different sizes because of using different quotient and remaining parts. These filters can be - theoretically - merged. Also resizing - which is not implemented in the current CQF library- can be done by merging the full small CQF into a larger empty one with the same no of hash bits but using smaller r value. As expected, testing of both ideas fail using the current implementation of CQF merge function because of the inability of the package to construct filters with different remaining parts
-
-
-[Code](https://github.com/shokrof/khmer/blob/DibMaster/testsCQF/mergeTest_Resize.c) Usage:
-~~~~
-make
-./mergeTest_Resize
-./mergeTest_DifferentSize
-~~~~
-
 
 ### Size Doubling
 CQF uses power-of-2 sizes. It is very efficient method since bit shifting can be used to calculate modulus operation. Also, Dividing the hash values into quotient and remaining can be done using bit masks. However, it has two disadvantages.
