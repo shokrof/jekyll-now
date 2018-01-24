@@ -3,7 +3,7 @@ layout: post
 title: Counting Quotient Filter take over?
 published: true
 ---
-**Authors:** Moustafa Shokrof<sup>1</sup> and Tamer A Mansour<sup>2</sup>
+**Authors:** Moustafa Shokrof(1) and Tamer A Mansour(2)
 
 1. Center of Information Science, Nile University
 2. Department of Population Health and Reproduction, University of California, Davis, California, USA.
