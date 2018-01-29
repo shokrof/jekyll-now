@@ -3,6 +3,10 @@ layout: post
 title: Counting Quotient Filter take over?
 published: true
 ---
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
 **Authors:** Moustafa Shokrof(1) and Tamer A Mansour(2)
 
 1. Center of Information Science, Nile University
@@ -70,8 +74,9 @@ Figure 2: the frequency distribution of the Zipifan dataset
 6. [Size Doubling](#size-doubling)
 
 ### CQF Construction Test
-CQF construction takes two values: the number of slots(2^q), and the number of hash bits(q+r). CQF [usage example](https://github.com/splatlab/cqf/blob/master/main.c) is used as template for testing. CQF example takes q value as an input from the user while r value is hard-coded to 8. CQF succeeds to construct filters using different values of q. However changing r value from 8 to any other value causes the code to fail.  
-CQF current software can only construct filter whose r=8. After diving in the code, I found that the number of bits per slot is set at the compilation time. Consequently, CQF current software limits the remaining part size to number decided at the compilation time. This bug not only affects the flexibility of the software but also affects the merging and resizing feature, See [merging and resizing test](#merging-and-possible-resizing-test).
+CQF construction takes two values: the number of slots(2^q), and the number of hash bits(q+r). CQF [usage example](https://github.com/splatlab/cqf/blob/master/main.c) is used as template for testing. r(key remainder size) is calculated by subtracting q from the number of hash bits. CQF succeeds to construct filters using different values of q. However changing r value from 8 to any other value violates assertion that r must be equal to hard coded variable(BITS_PER_SLOT=8).  
+
+If BITS_PER_SLOT is set to 0 in [gqf.h](https://github.com/splatlab/cqf/blob/master/gqf.h), The code passes the assertion and successfully constructs the filter. The new CQF passes Tests in [main.c](https://github.com/splatlab/cqf/blob/master/main.c). However, I am not sure the change in the code affects other functions in cqf library; I asked the autohrs on [github](https://github.com/splatlab/cqf/issues/6), and they replied
 
 ### CQF Unit Test
 I borrowed some test cases from Khmer to test CQF. The test cases cover simple inserting/querying items into the filter, saving filter to hard disk, and loading from hard disk. All the test cases passed except inserting highly frequent items (>65535). CQF dynamically allocate bigger counters for high frequent items. However, the largest counter is 2 bytes; therefore, It can count up to 65535. If we try to count more than 65535, the counter overflows and restarts counting. According to the definition of the variable counter in CQF, it should be able to expand but at least it should maintain the maximum value and report to the user.
@@ -106,12 +111,26 @@ The CQF has fewer but more scattered error compared to the count-min sketch.
 ### Merging and possible resizing test
 Quotient filters can be merged if they have been constructed using the same total number of hash bits. With the current implementation of CQF, merging two CQF into a new one was successful  as long as all of them have the same size.
 
-Different QFs might use the same total number of hash bits but have different sizes because of using different quotient and remaining parts. These filters can be - theoretically - merged. Also resizing - which is not implemented in the current CQF library- can be done by merging the full small CQF into a larger empty one with the same no of hash bits but using smaller r value. As expected, testing of both ideas fail using the current implementation of CQF merge function because of the inability of the package to construct filters with different remaining parts
+Different QFs might use the same total number of hash bits but have different sizes because of using different quotient and remaining parts. These filters can be - theoretically - merged. Also resizing - which is not implemented in the current CQF library- can be done by merging the full small CQF into a larger empty one with the same no of hash bits but using smaller r value. As expected, testing of both ideas fail using the current implementation of CQF merge function because of the inability of the package to construct filters with different remaining parts, see [CQF Construction Test](#cqf-construction-test).
+
+Merging and resizing can be tested when BITS_PER_SLOT in [gqf.h](https://github.com/splatlab/cqf/blob/master/gqf.h) is set to 0. Both tests([Merging Filters of Different sizes Test](https://github.com/dib-lab/khmer/blob/testCQF/testsCQF/mergeTest_DifferentSize.c),[Resizing Test](https://github.com/dib-lab/khmer/blob/testCQF/testsCQF/mergeTest_Resize.c)) are passed.
 
 ### Size Doubling
 CQF uses power-of-2 sizes. It is very efficient method since bit shifting can be used to calculate modulus operation. Also, Dividing the hash values into quotient and remaining can be done using bit masks. However, it has two disadvantages.
 1. Growing the CQF using size doubling technique is impractical for huge filter. For example, if you want to grow a 32GB sketch, you will need 64GB of RAM which may not available.
 2. It does not allow using prime sizes which is a usual best practice to avoids data clustering with unevenly distributed hash codes. [ref](http://srinvis.blogspot.com.eg/2006/07/hash-table-lengths-and-prime-numbers.html)
+
+## Choosing number of slots(q) and remaining part size(r)
+
+CQF false positive rate($$\delta$$) depends on $$r$$ and the load factor, which depends on $$q$$. However, the upper pound for $$\delta$$ depends only on $$r$$, $$2^{-r}$$. Therefore, r can be calculated using the formula $$r=-log_2(\delta)$$. The formula is similar to to the one use to calculate the optimal number of hash functions($$k$$) used in bloom filter, [$$k=-log_2(\delta)$$](https://en.wikipedia.org/wiki/Bloom_filter#Optimal_number_of_hash_functions).
+
+
+Number of unique elements($$N$$) to be inserted to the cqf depends on $$q$$ and the load factor. 
+
+$$q=\lceil log_2(1.05N)\rceil$$
+
+$$m=(q+10*\sqrt{q})*(r+2.125)$$
+
 ## Assessment Remarks
 1. CQF has lower false positive rate than bloom filter when filters are highly loaded, see [Accuracy Test](#accuracy-test).
 2. When the QF is fully loaded, the code just fail.
