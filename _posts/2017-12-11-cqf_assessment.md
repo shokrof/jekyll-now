@@ -122,14 +122,26 @@ CQF uses power-of-2 sizes. It is very efficient method since bit shifting can be
 
 ## Choosing number of slots(q) and remaining part size(r)
 
-CQF false positive rate($$\delta$$) depends on $$r$$ and the load factor, which depends on $$q$$. However, the upper pound for $$\delta$$ depends only on $$r$$, $$2^{-r}$$. Therefore, r can be calculated using the formula $$r=-log_2(\delta)$$. The formula is similar to to the one use to calculate the optimal number of hash functions($$k$$) used in bloom filter, [$$k=-log_2(\delta)$$](https://en.wikipedia.org/wiki/Bloom_filter#Optimal_number_of_hash_functions).
+CQF and RSQF false positive rate($$\delta$$) depends on $$r$$ and the load factor($$\alpha$$), which depends on $$q$$. However, the upper pound of $$\delta$$ depends only on $$r$$ which equals to $$2^{-r}$$. Therefore, r can be calculated using the formula $$r=-log_2(\delta)$$. The formula is similar to to the one use to calculate the optimal number of hash functions($$k$$) for bloom filter, [$$k=-log_2(\delta)$$](https://en.wikipedia.org/wiki/Bloom_filter#Optimal_number_of_hash_functions).
 
+$$q$$ can be calculated from the number of elements to be inserted in the filter and $$\delta$$. In RSQF, every item is inserted in one slot, and the filter can't be 100% filled. Therefore, number of slots equals to $${N}/{\alpha}$$. Since RSQF can
+withstand high load factor, we can substitute $$\alpha$$ with 0.95.
 
-Number of unique elements($$N$$) to be inserted to the cqf depends on $$q$$ and the load factor. 
 
 $$q=\lceil log_2(1.05N)\rceil$$
 
-$$m=(q+10*\sqrt{q})*(r+2.125)$$
+
+CQF uses slots for storing items and counters(how many the item is repeated($$C$$)). CQF uses in worst case 1 slot to store singletons, 2 slots to store doubleton, and $$4+2log_2(C)$$ slots to store elements repeated more than 2 times.
+Suppose a Dataset of $$X$$ unique item following a distribution where $$P(C=i)$$ is the probability of an element to be repeated $$i$$ times.
+Number of slots to be used(U) can be calculated using the following formula.
+
+$$U =  X*P(C=1) + 2X*P(C=2) + \sum_{i\geq3} (X*P(C=i)*( 4+2log_2(i) )) $$
+
+$$q = \lceil log_2(1.05U)\rceil$$
+
+
+CQF adds extra slots to the filter to avoid [overflow](https://github.com/splatlab/cqf/issues/4). Therefore,
+the number of bits required for the filter equals to $$(q+10*\sqrt{q})*(r+2.125)$$.
 
 ## Assessment Remarks
 1. CQF has lower false positive rate than bloom filter when filters are highly loaded, see [Accuracy Test](#accuracy-test).
